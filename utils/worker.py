@@ -1,0 +1,367 @@
+import os
+import random
+import time
+import datetime
+import pytz
+import platform
+import numpy as np
+
+from utils.config_handler import cf
+ENV_MAJOR_RANDOM_SEED = cf.val("ENV_MAJOR_RANDOM_SEED")
+ENV_MINOR_RANDOM_SEED = cf.val("ENV_MINOR_RANDOM_SEED")
+REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
+TOTAL_STEPS = cf.val("TOTAL_STEPS")
+AGENT = cf.val("AGENT")
+ENV = cf.val("ENV")
+USE_TRAJECTORY_FORMATTER = cf.val("USE_TRAJECTORY_FORMATTER")
+ARCHIVE_ALL_MODELS = cf.val("ARCHIVE_ALL_MODELS")
+XT_LOAD_MODEL = cf.val("XT_LOAD_MODEL")
+if XT_LOAD_MODEL:
+    XT_LOAD_MODEL_WS = cf.val("XT_LOAD_MODEL_WS")
+    XT_LOAD_MODEL_STEP = cf.val("XT_LOAD_MODEL_STEP")
+ANNEAL_LR = cf.val("ANNEAL_LR")
+
+
+class Worker(object):
+    def __init__(self, input_model, output_model, input_repres, output_repres):
+        self.output_model = output_model
+        self.output_repres = output_repres
+        self.USE_XTLIB = cf.use_xtlib
+        if self.USE_XTLIB:
+            from xtlib.run import Run as XTRun
+            self.xt_run_logger = XTRun()
+        self.start_time = time.time()
+        self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
+        if USE_TRAJECTORY_FORMATTER:
+            from utils.trajectory_formatter import TrajectoryFormatter
+            self.formatter = TrajectoryFormatter(self.observation_space_size, self.action_space_size)
+            self.observation_space_size = self.formatter.factor_sizes
+        self.agent = self.create_agent()
+        if XT_LOAD_MODEL:
+            self.step_num = XT_LOAD_MODEL_STEP
+        else:
+            self.step_num = 0
+        self.total_reward = 0.
+        self.num_steps = 0
+        self.num_episodes = 0
+        self.action = None
+        self.reward = 0.
+        self.done = False
+        self.best_metric_value = -1000000000.
+        self.t = None
+        self.save_trajs = None
+
+        if input_repres is not None:
+            self.load_repres(input_repres)
+
+        if input_model is not None:
+            self.load_model(input_model)
+
+        if self.USE_XTLIB and XT_LOAD_MODEL:
+            local_filename = 'model.pth'
+            azure_filename = 'models/{}.pth'.format(XT_LOAD_MODEL_STEP)
+            print("Downloading model from {} {} {}".format(XT_LOAD_MODEL_WS, self.xt_run_logger.run_name, azure_filename))
+            self.xt_run_logger.store.download_file_from_run(
+                XT_LOAD_MODEL_WS, self.xt_run_logger.run_name, azure_filename, local_filename)
+            self.agent.load_model(local_filename)
+
+    def create_results_output_file(self):
+        if not self.USE_XTLIB:
+            # Output is always written to a results directory (sibling of the code directory).
+            server_name = '{}'.format(platform.uname()[1])
+            datetime_string = pytz.utc.localize(
+                datetime.datetime.utcnow()).astimezone(pytz.timezone("PST8PDT")).strftime("%y-%m-%d_%H-%M-%S")
+            code_dir = os.path.dirname(os.path.abspath(__file__))
+            results_dir = os.path.join(os.path.dirname(code_dir), 'results')
+            self.output_filename = os.path.join(results_dir, 'out_{}_{}.txt'.format(server_name, datetime_string))
+            file = open(self.output_filename, 'w')
+            file.close()
+
+    def create_environment(self, major_seed=None, minor_seed=None):
+        # Each new environment should be listed here.
+        # minor_seed can be used to randomize part of the environment on each episode
+        # (like the agent's initial location) without changing the environment structure.
+        if ENV == "Pathfinding_Env":
+            from environments.pathfinding import Pathfinding_Env
+            environment = Pathfinding_Env(major_seed)
+        elif ENV == "BabyAI_Env":
+            from environments.bai import BabyAI_Env
+            environment = BabyAI_Env(major_seed)
+            HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
+            if (self.num == 0):
+                self.heldout_testing = HELDOUT_TESTING
+        elif ENV == "Sokoban_Env":
+            from environments.sokoban import Sokoban_Env
+            environment = Sokoban_Env(major_seed)
+        self.observation_space_size = environment.observation_space_size
+        self.action_space_size = environment.action_space_size
+        return environment
+
+    def create_agent(self):
+        # Each new agent should be listed here.
+        if AGENT == "RandomAgent":
+            from agents.random import RandomAgent
+            return RandomAgent(action_space_size=self.action_space_size)
+        elif AGENT == "AacAgent":
+            from agents.aac import AacAgent
+            return AacAgent(self.observation_space_size, self.action_space_size)
+        elif AGENT == "PathfinderAgent":
+            from agents.pathfinder import PathfinderAgent
+            return PathfinderAgent(self.observation_space_size, self.action_space_size)
+
+    def load_model(self, input_model):
+        self.agent.load_model(input_model)
+
+    def load_repres(self, input_repres):
+        self.agent.load_repres(input_repres)
+
+    def output(self, sz):
+        if not self.USE_XTLIB:
+            print(sz)
+            file = open(self.output_filename, 'a')
+            file.write(sz + '\n')
+            file.close()
+
+    def train(self):
+        self.create_results_output_file()
+        self.init_episode()
+        if self.USE_XTLIB:
+            cf.output_to_xt()
+        else:
+            cf.output_to_file(self.output_filename)
+        self.take_n_steps(1000000000, None, True)
+        self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
+
+    def test(self, save_trajs):
+        self.create_results_output_file()
+        self.init_episode()
+        self.save_trajs = save_trajs
+        if self.save_trajs is not None:
+            self.output_trajectory_file = open(save_trajs, 'w')
+            self.next_obs = np.copy(self.obs_orig)
+        if not self.USE_XTLIB:
+            cf.output_to_file(self.output_filename)
+        self.take_n_steps(1000000000, None, False)
+        if self.save_trajs is not None:
+            self.output_trajectory_file.close()
+        self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
+
+    def test_on_episode(self, episode_id):
+        steps_taken = 0
+        action = None
+        self.init_episode(episode_id)
+        while True:
+            action = self.agent.step(self.observation)
+            self.observation, reward, done = self.environment.step(action)
+            steps_taken += 1
+            if done:
+                return reward, steps_taken
+
+    def display(self):
+        self.init_episode()
+        self.init_turtle()
+        self.environment.use_display = True
+        self.draw()
+        self.wnd.mainloop()  # After this call, the program runs until the user closes the window.
+
+    def init_turtle(self):
+        import turtle
+        self.t = turtle.Turtle()
+        self.environment.t = self.t
+        self.t.hideturtle()
+        self.t.speed('fastest')
+        self.t.screen.tracer(0, 0)
+        self.t.penup()
+        self.wnd = turtle.Screen()
+        # self.wnd.setup(1902, 990, 0, 0)
+        # self.wnd.bgcolor("#808080")
+        self.wnd.bgcolor("light gray")
+        self.wnd.setup(2000, 1200, 0, 0)
+        # Cancel (the Break key), BackSpace, Tab, Return(the Enter key), Shift_L (any Shift key),
+        # Control_L (any Control key), Alt_L (any Alt key), Pause, Caps_Lock, Escape,
+        # Prior (Page Up), Next (Page Down), End, Home, Left, Up, Right, Down, Print, Insert, Delete,
+        # F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, Num_Lock, Scroll_Lock
+        self.wnd.onkey(self.on_up_key, "Up")
+        self.wnd.onkey(self.on_down_key, "Down")
+        self.wnd.onkey(self.on_left_key, "Left")
+        self.wnd.onkey(self.on_right_key, "Right")
+        self.wnd.onkey(self.on_space_key, " ")
+        self.wnd.onkey(self.on_escape_key, "Escape")
+        self.wnd.onkey(self.on_delete_key, "Delete")
+        self.wnd.onkey(self.on_r_key, "r")
+        self.wnd.onkey(self.on_n_key, "n")
+        self.wnd.listen()
+
+    def on_up_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Up'), False)
+
+    def on_down_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Down'), False)
+
+    def on_left_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Left'), False)
+
+    def on_right_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Right'), False)
+
+    def on_space_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Space'), False)
+
+    def on_delete_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('Delete'), False)
+
+    def on_r_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('r'), False)
+
+    def on_n_key(self):
+        self.take_n_steps(1, self.environment.translate_key_to_action('n'), False)
+
+    def on_escape_key(self):
+        exit(0)
+
+    def take_n_steps(self, max_steps, manual_action_override, train_agent, return_on_done = False):
+        if manual_action_override == -1:
+            return
+        self.action = None
+        for i in range(max_steps):
+            if self.step_num == TOTAL_STEPS:
+                print("Completed {} steps".format(TOTAL_STEPS))
+                self.report_final()
+                return
+
+            # Get an action.
+            if manual_action_override is None:
+                self.action = self.agent.step(self.observation)
+            else:
+                self.action = manual_action_override
+
+            # Apply the action to the environment, which may say the episode is done.
+            self.observation, self.reward, self.done = self.environment.step(self.action)
+
+            if return_on_done and self.done:
+                return self.reward, self.step_num
+
+            # Save trajectories, if necessary.
+            if self.save_trajs is not None:
+                if self.action is not None:
+                    action_vec = np.zeros(self.action_space_size)
+                    action_vec[self.action] = 1.
+                    self.output_trajectory_file.write("{}, {}, {}, {}\n".format(self.next_obs, action_vec, self.reward, 1 * self.done))
+                    self.next_obs = np.copy(self.observation)
+
+            # Reformat the observation, if necessary.
+            if USE_TRAJECTORY_FORMATTER:
+                self.observation = self.formatter.format_agent_observation(
+                    self.action, self.reward, self.done, self.observation)
+
+            # Let the agent adapt to the effects of the action before a new episode can be initialized.
+            if (manual_action_override is None) and train_agent:
+                self.agent.adapt(self.reward, self.done, self.observation)
+
+            # Report status periodically.
+            terminate = self.monitor(self.reward)
+            if terminate:
+                break
+
+            # After an episode ends, start a new one.
+            if self.done:
+                self.init_episode()
+
+    def init_episode(self, episode_id = None):
+        self.agent.reset_state()
+        self.observation = self.environment.reset(repeat=False, episode_id=episode_id)
+        self.obs_orig = self.observation
+        if USE_TRAJECTORY_FORMATTER:
+            self.formatter.reset_state()
+            self.observation = self.formatter.format_agent_observation(None, 0., 0, self.observation)
+        self.draw()
+
+    def draw(self):
+        if self.t:
+            self.t.clear()
+            self.environment.draw()
+
+    def report_final(self):
+        if hasattr(self.environment, 'get_hp_tuning_metric'):
+            metric = self.environment.get_hp_tuning_metric()
+            if self.USE_XTLIB:
+                metrics = {}
+                metrics[metric[2]] = metric[0]
+                self.xt_run_logger.log_metrics(metrics)
+            else:
+                formatted_value = metric[1]
+                label = metric[2]
+                HP_TUNING_METRIC = cf.val("HP_TUNING_METRIC")
+                print("HP tuning metric = {} {}".format(formatted_value, HP_TUNING_METRIC))
+
+    def monitor(self, reward):
+        self.step_num += 1
+        self.total_reward += reward
+        terminate = False
+
+        # Report results periodically.
+        if (self.step_num % REPORTING_INTERVAL) == 0:
+            if ANNEAL_LR:
+                self.agent.anneal_lr()
+            if self.USE_XTLIB:
+                # sz = "{:10.2f} sec  {:12,d} reporter steps".format(
+                #     time.time() - self.start_time, self.step_num)
+
+                if hasattr(self.environment, 'report_online_test_metric'):
+                    num_steps, num_episodes, metric_value, metric_tuple, terminate = \
+                        self.environment.report_online_test_metric()
+                    self.num_steps += num_steps
+                    self.num_episodes += num_episodes
+
+                    if ARCHIVE_ALL_MODELS:
+                        local_filename = 'model.pth'
+                        azure_filename = 'models/{}.pth'.format(self.step_num)
+                        self.agent.save_model(local_filename)
+                        self.xt_run_logger.store.upload_file_to_run(
+                            self.xt_run_logger.ws_name, self.xt_run_logger.run_name, azure_filename, local_filename)
+
+                    metrics = {}
+                    metrics["sec"] = time.time() - self.start_time
+                    metrics["steps"] = self.step_num
+                    metrics["tot_steps"] = self.num_steps
+                    metrics["tot_epis"] = self.num_episodes
+                    for metric in metric_tuple:
+                        formatted_value = metric[1]
+                        label = metric[2]
+                        metrics[label] = metric[0]
+                        # sz += "      {} {}".format(formatted_value, label)
+                    self.xt_run_logger.log_metrics(metrics)
+                # print(sz)
+            else:
+                sz = "{:10.2f} sec  {:12,d} steps".format(
+                    time.time() - self.start_time, self.step_num)
+                if hasattr(self.environment, 'report_online_test_metric'):
+                    num_steps, num_episodes, metric_value, metric_tuple, terminate = \
+                        self.environment.report_online_test_metric()
+                    self.num_steps += num_steps
+                    self.num_episodes += num_episodes
+
+                    saved = False
+                    # Is this the best metric so far?
+                    if metric_value > self.best_metric_value:
+                        self.best_metric_value = metric_value
+                        if self.output_repres is not None:
+                            self.agent.save_repres(self.output_repres)
+                            saved = True
+                        if self.output_model is not None:
+                            self.agent.save_model(self.output_model)
+                            saved = True
+
+                    # Report one line.
+                    sz += "  {:11,d} episodes".format(self.num_episodes)
+                    for metric in metric_tuple:
+                        formatted_value = metric[1]
+                        label = metric[2]
+                        sz += "      {} {}".format(formatted_value, label)
+                    if saved:
+                        sz += "  SAVED"
+                    else:
+                        sz += "       "
+                self.output(sz)
+
+        return terminate
