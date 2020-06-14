@@ -1,8 +1,8 @@
 
 # Working Memory Graphs
-This repository (wmg_agent) is the open source release associated with 
-the ICML 2020 paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141).
-Use the following steps to reproduce key results from that work.
+This repository is provided to assist in reproducing key results from 
+the paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
+published at ICML 2020.
 
 
 ## Installation Steps
@@ -33,9 +33,9 @@ To run a trained Sokoban agent with display:
         Press N to skip to the next puzzle.
         Press Esc to exit.
 
-## (More documentation coming)
+### (More documentation coming)
 
-# Citing
+# Citations
 
 If using this code in your work, please cite as follows:
 
@@ -49,7 +49,7 @@ If using this code in your work, please cite as follows:
     }
 
 Our implementation of Sokoban was derived in part from [https://github.com/mpSchrader/gym-sokoban](https://github.com/mpSchrader/gym-sokoban).
-If using the Sokoban environment in your work, please honor their attached license, and cite as follows:
+If using the Sokoban environment in your work, please honor their [license](environments/gym-sokoban-LICENSE), and cite as follows:
 
     @misc{SchraderSokoban2018,
       author = {Schrader, Max-Philipp B.},
@@ -62,7 +62,7 @@ If using the Sokoban environment in your work, please honor their attached licen
     }
 
 For convenience, we provide some of the predefined Boxoban levels from [https://github.com/deepmind/boxoban-levels](https://github.com/deepmind/boxoban-levels).
-If using these Boxoban levels in your work, please honor their attached license, and cite as follows:
+If using this data in your work, please honor their [license](data/boxoban-levels-master/LICENSE), and cite as follows:
 
     @misc{boxobanlevels,
       author = {Arthur Guez, Mehdi Mirza, Karol Gregor, Rishabh Kabra, Sebastien Racaniere, Theophane Weber, David Raposo, Adam Santoro, Laurent Orseau, Tom Eccles, Greg Wayne, David Silver, Timothy Lillicrap, Victor Valdes},
