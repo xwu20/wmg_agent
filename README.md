@@ -37,16 +37,38 @@ To run a trained Sokoban agent with display:
 
 # Citing
 
-If using this code for your research, please cite as follows:
+If using this code in your work, please cite as follows:
 
     @misc{wmg_agent_2020,
-      author = {Loynd, Ricky},
-      title = {wmg_agent},
+      author = {Ricky Loynd and Roland Fernandez and Asli Celikyilmaz and Adith Swaminathan and Matthew Hausknecht},
+      title = {Working Memory Graphs: Source code},
       year = {2020},
       publisher = {GitHub},
       journal = {GitHub repository},
-      howpublished = {\url{https://github.com/microsoft/wmg_agent}},
+      howpublished = {\url{https://github.com/microsoft/wmg_agent}}
+    }
+
+Our implementation of Sokoban was derived in part from [https://github.com/mpSchrader/gym-sokoban](https://github.com/mpSchrader/gym-sokoban).
+If using the Sokoban environment in your work, please honor their attached license, and cite as follows:
+
+    @misc{SchraderSokoban2018,
+      author = {Schrader, Max-Philipp B.},
+      title = {gym-sokoban},
+      year = {2018},
+      publisher = {GitHub},
+      journal = {GitHub repository},
+      howpublished = {\url{https://github.com/mpSchrader/gym-sokoban}},
       commit = {#CommitId}
+    }
+
+For convenience, we provide some of the predefined Boxoban levels from [https://github.com/deepmind/boxoban-levels](https://github.com/deepmind/boxoban-levels).
+If using these Boxoban levels in your work, please honor their attached license, and cite as follows:
+
+    @misc{boxobanlevels,
+      author = {Arthur Guez, Mehdi Mirza, Karol Gregor, Rishabh Kabra, Sebastien Racaniere, Theophane Weber, David Raposo, Adam Santoro, Laurent Orseau, Tom Eccles, Greg Wayne, David Silver, Timothy Lillicrap, Victor Valdes},
+      title = {An investigation of Model-free planning: boxoban levels},
+      howpublished= {https://github.com/deepmind/boxoban-levels/},
+      year = "2018",
     }
 
 # Contributing
