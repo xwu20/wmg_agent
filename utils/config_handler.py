@@ -3,9 +3,10 @@ import time
 import os, sys
 
 CODE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_OVERRIDES_PATH = os.path.join(os.path.dirname(CODE_DIR), 'config.py')
 
 config_rand = random.Random(time.time())  # For 'truly' random hyperparameter selection.
+
+cf = None
 
 '''
 Configuration settings in wmg_agent:
@@ -55,10 +56,12 @@ class Setting(object):
         return self.value
 
 class ConfigHandler(object):
-    def __init__(self):
+    def __init__(self, runspec_path):
         # Get the default config values.
-        self.use_xtlib = False
+        CONFIG_OVERRIDES_PATH = os.path.join(os.path.dirname(CODE_DIR), runspec_path)
         self.read_config_file(open(CONFIG_OVERRIDES_PATH, 'r'))
+        global cf
+        cf = self
 
     def read_config_file(self, file):
         self.settings = {}
@@ -102,35 +105,7 @@ class ConfigHandler(object):
         file.write('\n')
         file.close()
 
-    def output_to_xt(self):
-        for line in self.lines_or_settings_to_output:
-            if not isinstance(line, str):
-                if line.value_was_read:
-                    self.xt_run_logger.log_hparams({line.name_str: line.value})
-
     def safe_environ_var(self, key):
         return os.environ[key] if key in os.environ else None
 
-    def consult_azure_for_config(self):
-        self.use_xtlib = True
-        from xtlib.run import Run as XTRun
-        self.xt_run_logger = XTRun()
-        self.xt_run_logger.store.download_file_from_experiment(self.xt_run_logger.ws_name, self.xt_run_logger.exper_name, "config.txt", "config.txt")
-        self.read_config_file(open("config.txt", 'r'))
-        USE_DGD = self.val("USE_DGD")
-        USE_DGD2 = self.val("USE_DGD2")
-        if USE_DGD:
-            # Use Distributed Grid Descent to configure this run.
-            from xt.dgd import DGD
-            dgd = DGD()
-            chosen_runset = dgd.choose_config()
-            dgd.apply_config(chosen_runset, self)
-        if USE_DGD2:
-            # Use Distributed Grid Descent to configure this run.
-            from xt.dgd2 import DGD2
-            dgd = DGD2()
-            chosen_runset = dgd.choose_config()
-            dgd.apply_config(chosen_runset, self)
 
-
-cf = ConfigHandler()

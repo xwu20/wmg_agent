@@ -99,15 +99,6 @@ class Sokoban_Env(object):
         self.total_episodes = 0
         self.total_episodes_won = 0.
 
-        if cf.use_xtlib:
-            path_to_zip_file = 'data/boxoban-levels-master/unfiltered/train.zip'
-            if path.exists(path_to_zip_file):
-                path_to_target_dir = 'data/boxoban-levels-master/unfiltered'
-                zip_ref = zipfile.ZipFile(path_to_zip_file, 'r')
-                zip_ref.extractall(path_to_target_dir)
-                os.remove(path_to_zip_file)
-                print("Unzipped and deleted {}".format(path_to_zip_file))
-
     def reset(self, repeat=False, episode_id = None):
         self.train_data_dir = os.path.join('data', 'boxoban-levels-master', SOKOBAN_DIFFICULTY, SOKOBAN_SPLIT)
         self.select_room(repeat, episode_id)

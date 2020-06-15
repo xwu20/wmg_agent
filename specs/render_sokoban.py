@@ -1,6 +1,11 @@
 
 ###  CONTROLS  (non-tunable)  ###
 
+# general
+TYPE_OF_RUN = render  # train, test, render
+LOAD_MODEL_FROM = models/sokoban.pth
+SAVE_MODELS_TO = None
+
 # rl_train.py
 USE_DGD = False
 USE_DGD2 = False
@@ -16,10 +21,10 @@ ENV = Sokoban_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
 AGENT_RANDOM_SEED = 1
-REPORTING_INTERVAL = 100000
-TOTAL_STEPS = 1000000000
+REPORTING_INTERVAL = 100
+TOTAL_STEPS = 1000
 ANNEAL_LR = False
-LR_GAMMA = 0.99
+LR_GAMMA = 0.98
 
 # AacAgent
 AGENT_NET = WMG2_Network
