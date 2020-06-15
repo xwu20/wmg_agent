@@ -6,6 +6,8 @@ published at ICML 2020.
 
 
 ## Installation Steps
+* Both Windows and Linux are supported.
+	<br/><br/>
 * Clone this repository.
 	<br/><br/>
 * Create a new virtual environment (for python 3.6).
@@ -20,32 +22,14 @@ published at ICML 2020.
     * **pip install -r requirements.txt**
 	<br/><br/>
 
-# To run
+# Run commands
 
-All runs should be executed with wmg_agent as the current directory.
-
-All runs follow this format:
+All run commands follow this format (with **wmg_agent** as the current directory):
 
     python run.py <runspec>
 
 The runspecs in the [spec](specs) directory may be used as-is,
 or new specs may be created manually.
-
-To run a trained Sokoban agent with display:
-
-    python run.py specs/render_sokoban.py
-    
-    Then:
-        Enter moves with the arrow keys.
-        Press space to let agent move.
-        Press N to skip to the next puzzle.
-        Press Esc to exit.
-
-To train a Sokoban agent:
-
-    python run.py specs/train_sokoban.py
-    
-### (More documentation coming)
 
 # Citations
 
@@ -60,8 +44,10 @@ If using this code in your work, please cite as follows:
       howpublished = {\url{https://github.com/microsoft/wmg_agent}}
     }
 
-Our implementation of Sokoban was derived in part from [https://github.com/mpSchrader/gym-sokoban](https://github.com/mpSchrader/gym-sokoban).
-If using the Sokoban environment in your work, please honor their [license](environments/gym-sokoban-LICENSE), and cite as follows:
+This repo's implementation of Sokoban was derived in part from that of 
+[https://github.com/mpSchrader/gym-sokoban](https://github.com/mpSchrader/gym-sokoban).
+If using the Sokoban environment in your work, please honor that source's 
+[license](environments/gym-sokoban-LICENSE), and cite as follows:
 
     @misc{SchraderSokoban2018,
       author = {Schrader, Max-Philipp B.},
@@ -74,7 +60,8 @@ If using the Sokoban environment in your work, please honor their [license](envi
     }
 
 For convenience, we provide some of the predefined Boxoban levels from [https://github.com/deepmind/boxoban-levels](https://github.com/deepmind/boxoban-levels).
-If using this data in your work, please honor their [license](data/boxoban-levels-master/LICENSE), and cite as follows:
+If using this data in your work, please honor that source's 
+[license](data/boxoban-levels-master/LICENSE), and cite as follows:
 
     @misc{boxobanlevels,
       author = {Arthur Guez, Mehdi Mirza, Karol Gregor, Rishabh Kabra, Sebastien Racaniere, Theophane Weber, David Raposo, Adam Santoro, Laurent Orseau, Tom Eccles, Greg Wayne, David Silver, Timothy Lillicrap, Victor Valdes},

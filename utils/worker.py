@@ -5,6 +5,7 @@ import datetime
 import pytz
 import platform
 import numpy as np
+import torch
 
 from utils.config_handler import cf
 TYPE_OF_RUN = cf.val("TYPE_OF_RUN")
@@ -19,6 +20,7 @@ ENV = cf.val("ENV")
 USE_TRAJECTORY_FORMATTER = cf.val("USE_TRAJECTORY_FORMATTER")
 ARCHIVE_ALL_MODELS = cf.val("ARCHIVE_ALL_MODELS")
 ANNEAL_LR = cf.val("ANNEAL_LR")
+AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
 
 class Worker(object):
@@ -48,7 +50,9 @@ class Worker(object):
         if TYPE_OF_RUN == 'train':
             self.train()
         elif TYPE_OF_RUN == 'test':
-            self.test(None)
+            self.test()
+        elif TYPE_OF_RUN == 'test_episodes':
+            self.test_episodes()
         elif TYPE_OF_RUN == 'render':
             self.render()
         else:
@@ -111,18 +115,31 @@ class Worker(object):
         self.take_n_steps(1000000000, None, True)
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
 
-    def test(self, save_trajs):
+    def test(self):
         self.create_results_output_file()
         self.init_episode()
-        self.save_trajs = save_trajs
-        if self.save_trajs is not None:
-            self.output_trajectory_file = open(save_trajs, 'w')
-            self.next_obs = np.copy(self.obs_orig)
         cf.output_to_file(self.output_filename)
         self.take_n_steps(1000000000, None, False)
-        if self.save_trajs is not None:
-            self.output_trajectory_file.close()
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
+
+    def test_episodes(self):
+        # Test the model on all episodes.
+        num_wins = 0
+        num_episodes_tested = 0
+        num_episodes_to_test = 1000
+        print("Testing {} episodes.".format(num_episodes_to_test))
+        start_time = time.time()
+        for episode_id in range(num_episodes_to_test):
+            torch.manual_seed(AGENT_RANDOM_SEED)
+            final_reward, steps = self.test_on_episode(episode_id)
+            if final_reward > 1.0:
+                num_wins += 1
+                print("S", end='', flush=True)
+            else:
+                print("-", end='', flush=True)
+            num_episodes_tested += 1
+        print("\nTime: {:3.1f} min".format((time.time() - start_time)/60.))
+        print("Success rate = {}/{} = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
 
     def test_on_episode(self, episode_id):
         steps_taken = 0
