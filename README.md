@@ -1,6 +1,6 @@
 
 # Working Memory Graphs
-This repository is provided to assist in reproducing key results from 
+This repository is provided to assist in reproducing results from 
 the paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
 published at ICML 2020.
 
@@ -22,10 +22,18 @@ published at ICML 2020.
 
 # To run
 
+All runs should be executed with wmg_agent as the current directory.
+
+All runs follow this format:
+
+    python run.py <runspec>
+
+The runspecs in the [spec](specs) directory may be used as-is,
+or new specs may be created manually.
+
 To run a trained Sokoban agent with display:
 
-    At the wmg_agent directory, type:
-        python scripts\rl_display.py --load_model models\sokoban.pth
+    python run.py specs/render_sokoban.py
     
     Then:
         Enter moves with the arrow keys.
@@ -33,6 +41,10 @@ To run a trained Sokoban agent with display:
         Press N to skip to the next puzzle.
         Press Esc to exit.
 
+To train a Sokoban agent:
+
+    python run.py specs/train_sokoban.py
+    
 ### (More documentation coming)
 
 # Citations
