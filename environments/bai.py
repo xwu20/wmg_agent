@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
 import gym
 import babyai  # This registers the 19 MiniGrid levels.
 import numpy as np

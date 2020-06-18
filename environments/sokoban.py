@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 # Adapted from https://github.com/mpSchrader/gym-sokoban
 # Max-Philipp B. Schrader, 2018.
 

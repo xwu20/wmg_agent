@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
 import os, sys
 
 # Add the wmg_agent dir to the system path.
