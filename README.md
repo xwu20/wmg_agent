@@ -5,22 +5,15 @@ the paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
 published at ICML 2020.
 
 
-## Installation Steps
-* Both Windows and Linux are supported.
-	<br/><br/>
+## Installation steps
+* The code has been tested with Python 3.6, on both Windows and Linux.
 * Clone this repository.
-	<br/><br/>
-* Create a new virtual environment (for python 3.6).
-	<br/><br/>
+* Create a new virtual environment.
 * Activate the environment.
-	<br/><br/>
 * Install PyTorch 1.3.1:
-	* **conda install pytorch=1.3.1 torchvision cudatoolkit=10.1 -c pytorch**
-	<br/><br/>
-* Install dependencies:
+* Install other dependencies:
 	* **cd wmg_agent**
     * **pip install -r requirements.txt**
-	<br/><br/>
 
 # Run commands
 
@@ -28,8 +21,8 @@ All run commands follow this format (with **wmg_agent** as the current directory
 
     python run.py <runspec>
 
-The runspecs in the [spec](specs) directory may be used as-is,
-or new specs may be created manually.
+Use the runspecs in the [spec](specs) directory to reproduce results from the paper.
+Create new runspecs for new experiments.
 
 # Citations
 
