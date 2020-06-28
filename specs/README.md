@@ -15,6 +15,10 @@ Loads **models/pathfinding_wmg.pth** (one of the 100 WMG agent models trained on
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.498, which is 99.6% of possible reward.
 
+### train_pathfinding_wmg.py
+
+Trains a new WMG agent on random Pathfinding episodes for 20M timesteps (environment interactions).
+
 ## Sokoban runspecs
 
 ### test_sokoban.py

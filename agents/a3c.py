@@ -106,7 +106,7 @@ class A3cAgent(object):
     def copy_global_weights(self):
         self.local_net.load_state_dict(self.global_net.state_dict())
 
-    def save_local_model(self, filename):
+    def save_model(self, filename):
         torch.save(self.global_net.state_dict(), filename)
 
     def load_model(self, filename):
