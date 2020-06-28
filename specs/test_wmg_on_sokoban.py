@@ -6,7 +6,7 @@
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
 NUM_EPISODES_TO_TEST = 1000
-LOAD_MODEL_FROM = models/sokoban.pth
+LOAD_MODEL_FROM = models/wmg_sokoban.pth
 SAVE_MODELS_TO = None
 
 # rl_train.py

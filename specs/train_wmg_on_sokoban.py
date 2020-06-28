@@ -4,9 +4,9 @@
 ###  CONTROLS  (non-tunable)  ###
 
 # general
-TYPE_OF_RUN = render  # train, test, render
-LOAD_MODEL_FROM = models/sokoban.pth
-SAVE_MODELS_TO = None
+TYPE_OF_RUN = train  # train, test, render
+LOAD_MODEL_FROM = None
+SAVE_MODELS_TO = models/new_wmg_sokoban.pth
 
 # rl_train.py
 USE_DGD = False
@@ -22,9 +22,9 @@ AGENT = AacAgent_S
 ENV = Sokoban_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
-AGENT_RANDOM_SEED = 1
-REPORTING_INTERVAL = 100
-TOTAL_STEPS = 1000
+AGENT_RANDOM_SEED = 2
+REPORTING_INTERVAL = 100  # 100000 for full training run.
+TOTAL_STEPS = 1000  # 20000000 for full training run.
 ANNEAL_LR = False
 LR_GAMMA = 0.98
 

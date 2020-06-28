@@ -5,7 +5,7 @@
 
 # general
 TYPE_OF_RUN = test  # train, test, test_episodes, render
-LOAD_MODEL_FROM = models/pathfinding_wmg.pth
+LOAD_MODEL_FROM = models/new_wmg_pathfinding.pth
 SAVE_MODELS_TO = None
 
 # rl_train.py
