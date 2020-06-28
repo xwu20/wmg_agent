@@ -4,9 +4,9 @@
 ###  CONTROLS  (non-tunable)  ###
 
 # general
-TYPE_OF_RUN = train  # train, test, test_episodes, render
-LOAD_MODEL_FROM = None
-SAVE_MODELS_TO = models/new_wmg_pathfinding.pth
+TYPE_OF_RUN = test  # train, test, test_episodes, render
+LOAD_MODEL_FROM = models/wmg_pathfinding.pth
+SAVE_MODELS_TO = None
 
 # rl_train.py
 USE_DGD = False
@@ -20,7 +20,7 @@ XT_LOAD_MODEL_STEP = 1000000
 # worker.py
 AGENT = A3cAgent
 ENV = Pathfinding_Env
-ENV_MAJOR_RANDOM_SEED = 1  # Use randint for non-deterministic behavior.
+ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
 AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 12
@@ -28,7 +28,7 @@ TOTAL_STEPS = 1200
 ANNEAL_LR = False
 LR_GAMMA = 0.98
 
-# AacAgent
+# A3cAgent
 AGENT_NET = WMG_Network
 WMG_HIST_MEMS = False
 
