@@ -18,7 +18,7 @@ XT_LOAD_MODEL_WS = ws1133
 XT_LOAD_MODEL_STEP = 1000000
 
 # worker.py
-AGENT = AacAgent
+AGENT = AacAgent_S
 ENV = Sokoban_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
@@ -29,7 +29,7 @@ ANNEAL_LR = False
 LR_GAMMA = 0.98
 
 # AacAgent
-AGENT_NET = WMG2_Network
+AGENT_NET = WMG_Network_S
 
 # Sokoban_Env
 SOKOBAN_MAX_STEPS = 120
