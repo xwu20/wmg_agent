@@ -50,9 +50,9 @@ class ConceptMatrix(object):
             self.concepts[i] = self.concepts[i].detach()
 
 
-class WMG2_Network(nn.Module):
+class WMG_Network_S(nn.Module):
     def __init__(self, observation_space_size, action_space_size, factored_observations):
-        super(WMG2_Network, self).__init__()
+        super(WMG_Network_S, self).__init__()
         self.factored_observations = factored_observations
         self.node_vec_size = TFM_NUM_ATTENTION_HEADS * TFM_ATTENTION_HEAD_SIZE
         if WMG2_OUTPUT_LAYER_SIZE > 0:

@@ -31,7 +31,7 @@ if ANNEAL_LR:
 torch.manual_seed(AGENT_RANDOM_SEED)
 
 
-class AacAgent(object):
+class AacAgent_S(object):
     def __init__(self, observation_space_size, action_space_size):
         self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, Graph)
         self.internal_observation_space_size = observation_space_size
@@ -60,9 +60,12 @@ class AacAgent(object):
         elif AGENT_NET == "LSTM_Network":
             from agents.networks.lstm import LSTM_Network
             repres = LSTM_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "WMG2_Network":
-            from agents.networks.wmg2 import WMG2_Network
-            repres = WMG2_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+        if AGENT_NET == "WMG_Network":
+            from agents.networks.wmg import WMG_Network
+            return WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+        elif AGENT_NET == "WMG_Network_S":
+            from agents.networks.wmg_s import WMG_Network_S
+            repres = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
         else:
             assert False  # The specified agent network was not found.
         if NUM_AC_LAYERS == 1:

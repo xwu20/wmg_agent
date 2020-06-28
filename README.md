@@ -10,14 +10,14 @@ published at ICML 2020.
 * Clone this repository.
 * Create a new virtual environment.
 * Activate the environment.
-* Install PyTorch 1.3.1:
+* Install PyTorch 1.3.1.
 * Install other dependencies:
 	* **cd wmg_agent**
     * **pip install -r requirements.txt**
 
 # Run commands
 
-All run commands follow this format (with **wmg_agent** as the current directory):
+Execute all run commands from the **wmg_agent** directory, using this format:
 
     python run.py <runspec>
 

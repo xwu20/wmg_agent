@@ -9,17 +9,23 @@ To execute any of the runspecs in this directory (with **wmg_agent** as the curr
 
 ## Pathfinding runspecs
 
+### test_pathfinding_wmg.py
+
+Loads **models/pathfinding_wmg.pth** (one of the 100 WMG agent models trained on 20M environment interactions),
+then tests the agent on 1000 random episodes.
+The reward per step should be around 0.498, which is 99.6% of possible reward.
+
 ## Sokoban runspecs
 
 ### test_sokoban.py
 
-This loads **models/sokoban.pth** (one of the 20 WMG agent models trained on 20M environment interactions),
+Loads **models/sokoban.pth** (one of the 20 WMG agent models trained on 20M environment interactions),
 then tests the agent on the official [test set](../data/boxoban-levels-master/unfiltered/test) of 1000 puzzles.
 The success rate should be around 84%.
 
 ### train_sokoban.py
 
-This trains a new WMG agent on Sokoban puzzles drawn randomly from the [train set](../data/boxoban-levels-master/unfiltered/train),
+Trains a new WMG agent on Sokoban puzzles drawn randomly from the [train set](../data/boxoban-levels-master/unfiltered/train),
 which contains 10k puzzles.
 In order to train an agent on the full train set of 900k puzzles, 
 first copy all 900 files from [https://github.com/deepmind/boxoban-levels](https://github.com/deepmind/boxoban-levels) 

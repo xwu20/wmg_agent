@@ -96,9 +96,12 @@ class Worker(object):
         if AGENT == "RandomAgent":
             from agents.random import RandomAgent
             return RandomAgent(action_space_size=self.action_space_size)
-        elif AGENT == "AacAgent":
-            from agents.aac import AacAgent
-            return AacAgent(self.observation_space_size, self.action_space_size)
+        elif AGENT == "AacAgent_S":
+            from agents.a3c_s import AacAgent_S
+            return AacAgent_S(self.observation_space_size, self.action_space_size)
+        elif AGENT == "A3cAgent":
+            from agents.a3c import A3cAgent
+            return A3cAgent('0', self.observation_space_size, self.action_space_size)
         elif AGENT == "PathfinderAgent":
             from agents.pathfinder import PathfinderAgent
             return PathfinderAgent(self.observation_space_size, self.action_space_size)
@@ -126,12 +129,12 @@ class Worker(object):
 
     def test_episodes(self):
         # Test the model on all episodes.
+        NUM_EPISODES_TO_TEST = cf.val("NUM_EPISODES_TO_TEST")
         num_wins = 0
         num_episodes_tested = 0
-        num_episodes_to_test = 1000
-        print("Testing {} episodes.".format(num_episodes_to_test))
+        print("Testing {} episodes.".format(NUM_EPISODES_TO_TEST))
         start_time = time.time()
-        for episode_id in range(num_episodes_to_test):
+        for episode_id in range(NUM_EPISODES_TO_TEST):
             torch.manual_seed(AGENT_RANDOM_SEED)
             final_reward, steps = self.test_on_episode(episode_id)
             if final_reward > 1.0:
@@ -223,7 +226,8 @@ class Worker(object):
         for i in range(max_steps):
             if self.step_num == TOTAL_STEPS:
                 print("Completed {} steps".format(TOTAL_STEPS))
-                self.report_final()
+                if train_agent:
+                    self.report_final()
                 return
 
             # Get an action.

@@ -179,7 +179,7 @@ class Pathfinding_Env(object):
         self.quiz_agent_on_next_step = not self.quiz_agent_on_next_step
         return self.observation
 
-    def reset(self):
+    def reset(self, repeat=False, episode_id = None):
         self.graph.reset()
         self.quiz_agent_on_next_step = False
         return self.assemble_current_observation()

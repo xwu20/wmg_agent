@@ -5,7 +5,7 @@
 
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
-NUM_EPISODES_TO_TEST = 1000
+NUM_EPISODES_TO_TEST = 10
 LOAD_MODEL_FROM = models/sokoban.pth
 SAVE_MODELS_TO = None
 
