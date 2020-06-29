@@ -5,7 +5,7 @@ To execute one of the following runspecs, with **wmg_agent** as the current dire
 
     python run.py specs/<runspec>
 
-Hyperparameters in each runspec were tuned for its particular combination of agent and environment.
+Each runspec's hyperparameters were tuned for that particular combination of agent and environment.
 
 ## Pathfinding runspecs
 
@@ -51,7 +51,7 @@ trains a new WMG agent on random BabyAI episodes with factored images,
 until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_factored_babyai.py](test_wmg_on_factored_babyai.py)
-loads **models/wmg_factored_pathfinding.pth**,
+loads **models/wmg_factored_babyai.pth**,
 one of the 100 WMG agent models trained for a median of 1,379,900 environment interactions,
 then tests the agent on 1000 random episodes.
 The success rate should be about 99%.

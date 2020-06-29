@@ -27,6 +27,7 @@ AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
 class Worker(object):
     def __init__(self):
+        torch.manual_seed(AGENT_RANDOM_SEED)
         self.start_time = time.time()
         self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
         if USE_TRAJECTORY_FORMATTER:

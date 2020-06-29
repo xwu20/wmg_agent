@@ -28,7 +28,7 @@ TOTAL_STEPS = 1200
 ANNEAL_LR = False
 LR_GAMMA = 0.98
 
-# AacAgent
+# A3cAgent
 AGENT_NET = WMG_Network
 WMG_HIST_MEMS = False
 
