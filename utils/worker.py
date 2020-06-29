@@ -29,12 +29,17 @@ class Worker(object):
     def __init__(self):
         torch.manual_seed(AGENT_RANDOM_SEED)
         self.start_time = time.time()
+        self.heldout_testing = False
         self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
         if USE_TRAJECTORY_FORMATTER:
             from utils.trajectory_formatter import TrajectoryFormatter
             self.formatter = TrajectoryFormatter(self.observation_space_size, self.action_space_size)
             self.observation_space_size = self.formatter.factor_sizes
-        self.agent = self.create_agent()
+        self.agent = self.create_agent('0')
+        if self.heldout_testing:
+            self.environment.test_environment = self.create_environment(ENV_MAJOR_RANDOM_SEED + 1000000, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
+            self.environment.test_agent = self.create_agent("tester")
+            self.environment.test_agent.global_net = self.agent.global_net
         self.step_num = 0
         self.total_reward = 0.
         self.num_steps = 0
@@ -80,11 +85,10 @@ class Worker(object):
             from environments.pathfinding import Pathfinding_Env
             environment = Pathfinding_Env(major_seed)
         elif ENV == "BabyAI_Env":
-            from environments.bai import BabyAI_Env
+            from environments.babyai import BabyAI_Env
             environment = BabyAI_Env(major_seed)
             HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
-            if (self.num == 0):
-                self.heldout_testing = HELDOUT_TESTING
+            self.heldout_testing = HELDOUT_TESTING
         elif ENV == "Sokoban_Env":
             from environments.sokoban import Sokoban_Env
             environment = Sokoban_Env(major_seed)
@@ -92,17 +96,17 @@ class Worker(object):
         self.action_space_size = environment.action_space_size
         return environment
 
-    def create_agent(self):
+    def create_agent(self, agent_name):
         # Each new agent should be listed here.
         if AGENT == "RandomAgent":
             from agents.random import RandomAgent
             return RandomAgent(action_space_size=self.action_space_size)
-        elif AGENT == "AacAgent_S":
-            from agents.a3c_s import AacAgent_S
-            return AacAgent_S(self.observation_space_size, self.action_space_size)
+        elif AGENT == "A3cAgent_S":
+            from agents.a3c_s import A3cAgent_S
+            return A3cAgent_S(self.observation_space_size, self.action_space_size)
         elif AGENT == "A3cAgent":
             from agents.a3c import A3cAgent
-            return A3cAgent('0', self.observation_space_size, self.action_space_size)
+            return A3cAgent(agent_name, self.observation_space_size, self.action_space_size)
         elif AGENT == "PathfinderAgent":
             from agents.pathfinder import PathfinderAgent
             return PathfinderAgent(self.observation_space_size, self.action_space_size)
@@ -130,7 +134,10 @@ class Worker(object):
 
     def test_episodes(self):
         # Test the model on all episodes.
+        # Success is determined by positive reward on the final step,
+        # which works for BabyAI and Sokoban, but is not appropriate for many environments.
         NUM_EPISODES_TO_TEST = cf.val("NUM_EPISODES_TO_TEST")
+        MIN_FINAL_REWARD_FOR_SUCCESS = cf.val("MIN_FINAL_REWARD_FOR_SUCCESS")
         num_wins = 0
         num_episodes_tested = 0
         print("Testing {} episodes.".format(NUM_EPISODES_TO_TEST))
@@ -138,11 +145,11 @@ class Worker(object):
         for episode_id in range(NUM_EPISODES_TO_TEST):
             torch.manual_seed(AGENT_RANDOM_SEED)
             final_reward, steps = self.test_on_episode(episode_id)
-            if final_reward > 1.0:
+            if final_reward >= MIN_FINAL_REWARD_FOR_SUCCESS:
                 num_wins += 1
-                print("S", end='', flush=True)
+                print("S ", end='', flush=True)  # Print 'S' for success on episode.
             else:
-                print("-", end='', flush=True)
+                print("- ", end='', flush=True)  # Print '-' for success on episode.
             num_episodes_tested += 1
         print("\nTime: {:3.1f} min".format((time.time() - start_time)/60.))
         print("Success rate = {}/{} = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))

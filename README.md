@@ -12,8 +12,14 @@ published at ICML 2020.
 * Activate the environment.
 * Install PyTorch 1.3.1.
 * Install other dependencies:
-	* **cd wmg_agent**
-    * **pip install -r requirements.txt**
+	* cd wmg_agent
+    * pip install -r requirements.txt
+* Install BabyAI:
+	* conda install -c conda-forge python-blosc
+	* git clone -b iclr19 https://github.com/mila-iqia/babyai.git
+	* cd babyai
+	* pip install --user --editable .
+
 
 # Run commands
 

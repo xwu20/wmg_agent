@@ -52,8 +52,8 @@ until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_factored_babyai.py](test_wmg_on_factored_babyai.py)
 loads **models/wmg_factored_babyai.pth**,
-one of the 100 WMG agent models trained for a median of 1,379,900 environment interactions,
-then tests the agent on 1000 random episodes.
+a WMG agent model trained for 1,380,000 environment interactions,
+then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
 [train_wmg_on_native_babyai.py](train_wmg_on_native_babyai.py)
@@ -63,8 +63,14 @@ The success rate should be about 99%.
 #### GRU agent
 
 [train_gru_on_factored_babyai.py](train_gru_on_factored_babyai.py)
+trains a new GRU agent on random BabyAI episodes with factored images,
+until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_gru_on_factored_babyai.py](test_gru_on_factored_babyai.py)
+loads **models/gru_factored_babyai.pth**
+(a GRU agent model trained for 2,250,000 environment interactions),
+then tests the agent on 1,000 heldout episodes.
+The success rate should be about 99%.
 
 [train_gru_on_native_babyai.py](train_gru_on_native_babyai.py)
 

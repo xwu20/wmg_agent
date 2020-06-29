@@ -31,7 +31,7 @@ if ANNEAL_LR:
 torch.manual_seed(AGENT_RANDOM_SEED)
 
 
-class AacAgent_S(object):
+class A3cAgent_S(object):
     def __init__(self, observation_space_size, action_space_size):
         self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, Graph)
         self.internal_observation_space_size = observation_space_size

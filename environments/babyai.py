@@ -4,7 +4,7 @@ import gym
 import babyai  # This registers the 19 MiniGrid levels.
 import numpy as np
 
-from config_handler import cf
+from utils.config_handler import cf
 BABYAI_ENV_LEVEL = cf.val("BABYAI_ENV_LEVEL")
 USE_SUCCESS_RATE = cf.val("USE_SUCCESS_RATE")  # Used by post-processing files.
 SUCCESS_RATE_THRESHOLD = cf.val("SUCCESS_RATE_THRESHOLD")
@@ -540,7 +540,9 @@ class BabyAI_Env(object):
         assert (id == self.observation_space_size)
         return [self.observation, obs['image']]
 
-    def reset(self):
+    def reset(self, repeat=False, episode_id = None):
+        if episode_id is not None:
+            self.env.seed(episode_id + 1000000)
         obs = self.env.reset()
         return self.assemble_current_observation(obs)
 
@@ -608,22 +610,14 @@ class BabyAI_Env(object):
             self.running_success_rate = self.success_sum / len(self.success_buf)
 
 
-    def report_online_test_metric(self, environments):
+    def report_online_test_metric(self):
         if HELDOUT_TESTING:
-            return self.heldout_test(environments)
+            return self.heldout_test()
         else:
-            return self.online_test(environments)
+            return self.online_test()
 
-    def heldout_test(self, environments):
+    def heldout_test(self):
         # Called by the reporting manager only.
-        # Combine certain online sums from all threads.
-        for env in environments:
-            if env != self:
-                self.step_sum += env.step_sum
-                self.num_episodes += env.num_episodes
-                # Schedule a lazy reset of the sums, so that thread contention
-                # cannot overwrite the zeros with previously collected sums.
-                env.need_to_reset_sums = True
 
         # Evaluate the current model on a random set of environments.
         agent = self.test_agent
@@ -676,22 +670,11 @@ class BabyAI_Env(object):
 
         return ret
 
-    def online_test(self, environments):
+    def online_test(self):
         # Called by the reporting manager only.
         # Combine the online sums from all threads.
         sum_RSR = self.running_success_rate
         num_RSR = 1
-        for env in environments:
-            if env != self:
-                self.step_sum += env.step_sum
-                self.reward_sum += env.reward_sum
-                self.num_episodes += env.num_episodes
-                self.num_successful_episodes += env.num_successful_episodes
-                sum_RSR += env.running_success_rate
-                num_RSR += 1
-                # Schedule a lazy reset of the sums, so that thread contention
-                # cannot overwrite the zeros with previously collected sums.
-                env.need_to_reset_sums = True
 
         # Calculate the final metric for this test period.
         # steps_per_episode = self.step_sum / self.num_episodes

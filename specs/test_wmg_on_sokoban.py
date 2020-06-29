@@ -6,6 +6,7 @@
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
 NUM_EPISODES_TO_TEST = 1000
+MIN_FINAL_REWARD_FOR_SUCCESS = 2.0
 LOAD_MODEL_FROM = models/wmg_sokoban.pth
 SAVE_MODELS_TO = None
 
@@ -19,7 +20,7 @@ XT_LOAD_MODEL_WS = ws1133
 XT_LOAD_MODEL_STEP = 1000000
 
 # worker.py
-AGENT = AacAgent_S
+AGENT = A3cAgent_S
 ENV = Sokoban_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
@@ -29,7 +30,7 @@ TOTAL_STEPS = 100000
 ANNEAL_LR = False
 LR_GAMMA = 0.98
 
-# AacAgent
+# A3cAgent
 AGENT_NET = WMG_Network_S
 
 # Sokoban_Env
@@ -58,7 +59,7 @@ GRADIENT_CLIP = 512.0
 ENTROPY_REG = 0.02
 ADAM_EPS = 1e-10
 
-# AacAgent
+# A3cAgent
 REWARD_SCALE = 4.
 WEIGHT_DECAY = 0.
 NUM_AC_LAYERS = 1
