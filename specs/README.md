@@ -73,8 +73,14 @@ then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
 [train_gru_on_flat_babyai.py](train_gru_on_flat_babyai.py)
+trains a new GRU agent on random BabyAI episodes with flat images,
+until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_gru_on_flat_babyai.py](test_gru_on_flat_babyai.py)
+loads **models/gru_flat_babyai.pth**
+(a GRU agent model trained for 1,800,000 environment interactions),
+then tests the agent on 1,000 heldout episodes.
+The success rate should be about 99%.
 
 
 ## Sokoban runspecs
