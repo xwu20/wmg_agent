@@ -22,6 +22,8 @@ ENV = cf.val("ENV")
 USE_TRAJECTORY_FORMATTER = cf.val("USE_TRAJECTORY_FORMATTER")
 ARCHIVE_ALL_MODELS = cf.val("ARCHIVE_ALL_MODELS")
 ANNEAL_LR = cf.val("ANNEAL_LR")
+if ANNEAL_LR:
+    ANNEALING_START = cf.val("ANNEALING_START")
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
 
@@ -183,7 +185,7 @@ class Worker(object):
         # self.wnd.setup(1902, 990, 0, 0)
         # self.wnd.bgcolor("#808080")
         self.wnd.bgcolor("light gray")
-        self.wnd.setup(2000, 1200, 0, 0)
+        self.wnd.setup(1000, 800, 0, 0)
         # Cancel (the Break key), BackSpace, Tab, Return(the Enter key), Shift_L (any Shift key),
         # Control_L (any Control key), Alt_L (any Alt key), Pause, Caps_Lock, Escape,
         # Prior (Page Up), Next (Page Down), End, Home, Left, Up, Right, Down, Print, Insert, Delete,
@@ -305,7 +307,8 @@ class Worker(object):
         # Report results periodically.
         if (self.step_num % REPORTING_INTERVAL) == 0:
             if ANNEAL_LR:
-                self.agent.anneal_lr()
+                if self.step_num > ANNEALING_START:
+                    self.agent.anneal_lr()
             sz = "{:10.2f} sec  {:12,d} steps".format(
                 time.time() - self.start_time, self.step_num)
             if hasattr(self.environment, 'report_online_test_metric'):

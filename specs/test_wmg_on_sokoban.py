@@ -5,7 +5,7 @@
 
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
-NUM_EPISODES_TO_TEST = 1000
+NUM_EPISODES_TO_TEST = 1000  # 1000 10
 MIN_FINAL_REWARD_FOR_SUCCESS = 2.0
 LOAD_MODEL_FROM = models/wmg_sokoban.pth
 SAVE_MODELS_TO = None

@@ -155,6 +155,7 @@ class A3cAgent_S(object):
         self.optimizer.step()
 
     def anneal_lr(self):
+        print('Scaling down the learning rate by {}'.format(LR_GAMMA))
         self.scheduler.step()
 
     def loss_function(self, next_value, values, logps, actions, rewards):
