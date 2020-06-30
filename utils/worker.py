@@ -147,12 +147,11 @@ class Worker(object):
             final_reward, steps = self.test_on_episode(episode_id)
             if final_reward >= MIN_FINAL_REWARD_FOR_SUCCESS:
                 num_wins += 1
-                print("S ", end='', flush=True)  # Print 'S' for success on episode.
-            else:
-                print("- ", end='', flush=True)  # Print '-' for success on episode.
             num_episodes_tested += 1
-        print("\nTime: {:3.1f} min".format((time.time() - start_time)/60.))
-        print("Success rate = {}/{} = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
+            if (num_episodes_tested % (NUM_EPISODES_TO_TEST / 10) == 0):
+                print('{:4d} / {:5d}  =  {:5.1f}%'.format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
+        print("Time: {:3.1f} min".format((time.time() - start_time)/60.))
+        print("Success rate = {} / {} episodes = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
 
     def test_on_episode(self, episode_id):
         steps_taken = 0

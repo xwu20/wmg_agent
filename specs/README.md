@@ -42,7 +42,8 @@ The reward per step should be around 0.474, which is 94.7% of possible reward.
 
 ## BabyAI runspecs
 
-The following BabyAI runspecs use Level 4 (GoToLocal) and factored instructions.
+The following BabyAI runspecs use Level 4 (GoToLocal).
+Any of the other 18 BabyAI levels can be selected by modifying the runspec.
 
 #### WMG agent
 
