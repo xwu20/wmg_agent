@@ -53,13 +53,19 @@ until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_factored_babyai.py](test_wmg_on_factored_babyai.py)
 loads **models/wmg_factored_babyai.pth**,
-a WMG agent model trained for 1,380,000 environment interactions,
+a WMG agent model trained for 60,000 environment interactions,
 then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
 [train_wmg_on_flat_babyai.py](train_wmg_on_flat_babyai.py)
+trains a new WMG agent on random BabyAI episodes with flat images,
+until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_flat_babyai.py](test_wmg_on_flat_babyai.py)
+loads **models/wmg_flat_babyai.pth**,
+a WMG agent model trained for 1,400,000 environment interactions,
+then tests the agent on 1,000 random episodes.
+The success rate should be about 99%.
 
 #### GRU agent
 
