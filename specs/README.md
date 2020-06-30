@@ -56,9 +56,9 @@ a WMG agent model trained for 1,380,000 environment interactions,
 then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
-[train_wmg_on_native_babyai.py](train_wmg_on_native_babyai.py)
+[train_wmg_on_flat_babyai.py](train_wmg_on_flat_babyai.py)
 
-[test_wmg_on_native_babyai.py](test_wmg_on_native_babyai.py)
+[test_wmg_on_flat_babyai.py](test_wmg_on_flat_babyai.py)
 
 #### GRU agent
 
@@ -72,9 +72,9 @@ loads **models/gru_factored_babyai.pth**
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
-[train_gru_on_native_babyai.py](train_gru_on_native_babyai.py)
+[train_gru_on_flat_babyai.py](train_gru_on_flat_babyai.py)
 
-[test_gru_on_native_babyai.py](test_gru_on_native_babyai.py)
+[test_gru_on_flat_babyai.py](test_gru_on_flat_babyai.py)
 
 
 ## Sokoban runspecs
