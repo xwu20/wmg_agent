@@ -85,7 +85,7 @@ until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_gru_on_flat_babyai.py](test_gru_on_flat_babyai.py)
 loads **models/gru_flat_babyai.pth**
-(a GRU agent model trained for 1,800,000 environment interactions),
+(a GRU agent model trained for 1,970,000 environment interactions),
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
