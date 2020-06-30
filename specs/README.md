@@ -68,7 +68,7 @@ until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_gru_on_factored_babyai.py](test_gru_on_factored_babyai.py)
 loads **models/gru_factored_babyai.pth**
-(a GRU agent model trained for 2,250,000 environment interactions),
+(a GRU agent model trained for 2,370,000 environment interactions),
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
