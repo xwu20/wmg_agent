@@ -5,7 +5,7 @@
 
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
-NUM_EPISODES_TO_TEST = 1000  # 1000 100
+NUM_EPISODES_TO_TEST = 100  # 1000 100
 MIN_FINAL_REWARD_FOR_SUCCESS = 1.0
 LOAD_MODEL_FROM = models/wmg_flat_babyai.pth
 SAVE_MODELS_TO = None
@@ -42,9 +42,6 @@ HELDOUT_TESTING = False
 NUM_TEST_EPISODES = 10000
 OBS_ENCODER = Flat
 BINARY_REWARD = True
-
-# TrajectoryFormatter
-USE_TRAJECTORY_FORMATTER = False
 
 ###  HYPERPARAMETERS  (tunable)  ###
 

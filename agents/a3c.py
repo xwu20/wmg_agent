@@ -16,9 +16,6 @@ REWARD_SCALE = cf.val("REWARD_SCALE")
 ADAM_EPS = cf.val("ADAM_EPS")
 
 
-# Current limitations:  single-agent only, no model saving or loading.
-
-
 class A3cAgent(object):
     def __init__(self, agent_name, observation_space_size, action_space_size):
         self.name = agent_name
@@ -38,51 +35,12 @@ class A3cAgent(object):
         print("{:11,d} trainable parameters".format(self.count_parameters(self.local_net)))
 
     def create_network(self):
-        if AGENT_NET == "DM_Network":
-            from agents.networks.dm import DM_Network
-            return DM_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "FF_Network":
-            from agents.networks.ff import FF_Network
-            return FF_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "ResFF_Network":
-            from agents.networks.res_ff import ResFF_Network
-            return ResFF_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "CNN_GRU_Network":
-            from agents.networks.cnn_gru import CNN_GRU_Network
-            return CNN_GRU_Network(self.internal_observation_space_size, self.action_space_size)
         if AGENT_NET == "GRU_Network":
             from agents.networks.gru import GRU_Network
             return GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "LSTM_Network":
-            from agents.networks.lstm import LSTM_Network
-            return LSTM_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "WMG0_Network":
-            from agents.networks.wmg0 import WMG0_Network
-            return WMG0_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "TFM_Network":
-            from agents.networks.tfm import TFM_Network
-            return TFM_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        if AGENT_NET == "TFM1_Network":
-            from agents.networks.tfm1 import TFM1_Network
-            return TFM1_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        if AGENT_NET == "TFM2_Network":
-            from agents.networks.tfm2 import TFM2_Network
-            return TFM2_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        if AGENT_NET == "TFM3_Network":
-            from agents.networks.tfm3 import TFM3_Network
-            return TFM3_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        if AGENT_NET == "TFM4_Network":
-            from agents.networks.tfm4 import TFM4_Network
-            return TFM4_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
         if AGENT_NET == "WMG_Network":
             from agents.networks.wmg import WMG_Network
             return WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        if AGENT_NET == "WMG1_Network":
-            from agents.networks.wmg1 import WMG1_Network
-            return WMG1_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "WMG2_Network":
-            from agents.networks.wmg_s import WMG2_Network
-            return WMG2_Network(self.internal_observation_space_size, self.action_space_size)
         assert False  # The specified agent network was not found.
 
     def count_parameters(self, network):

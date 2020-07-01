@@ -40,9 +40,6 @@ SOKOBAN_BOXES_REQUIRED = 4
 SOKOBAN_OBSERVATION_FORMAT = factored
 HP_TUNING_METRIC = FinalSuccessRate
 
-# TrajectoryFormatter
-USE_TRAJECTORY_FORMATTER = False
-
 ###  HYPERPARAMETERS  (tunable)  ###
 
 # Sokoban_Env

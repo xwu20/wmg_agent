@@ -44,25 +44,9 @@ class A3cAgent_S(object):
         print("{:11,d} trainable parameters".format(self.count_parameters(self.network)))
 
     def create_network(self):
-        # Each new agent network should be listed here.
-        if AGENT_NET == "FF_Network":
-            from agents.networks.ff import FF_Network
-            repres = FF_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "ResFF_Network":
-            from agents.networks.res_ff import ResFF_Network
-            repres = ResFF_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "CNN_GRU_Network":
-            from agents.networks.cnn_gru import CNN_GRU_Network
-            repres = CNN_GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "GRU_Network":
+        if AGENT_NET == "GRU_Network":
             from agents.networks.gru import GRU_Network
             repres = GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "LSTM_Network":
-            from agents.networks.lstm import LSTM_Network
-            repres = LSTM_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "WMG_Network":
-            from agents.networks.wmg import WMG_Network
-            return WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
         elif AGENT_NET == "WMG_Network_S":
             from agents.networks.wmg_s import WMG_Network_S
             repres = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)

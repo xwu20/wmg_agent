@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 import random
 import time
-import os, sys
+import os
 
 CODE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,6 +22,7 @@ The config.py file defines every parameter and its allowed settings.
         3. "parameter name = setting value(s)  # Optional comment"
 Parameters which are accessed during initialization of a run are written to the top of the output file.
 '''
+
 
 class Setting(object):
     def __init__(self, name_str, value_str, line_num):
@@ -57,17 +58,18 @@ class Setting(object):
         self.value_was_read = True
         return self.value
 
+
 class ConfigHandler(object):
     def __init__(self, runspec_path):
         # Get the default config values.
-        CONFIG_OVERRIDES_PATH = os.path.join(os.path.dirname(CODE_DIR), runspec_path)
-        self.read_config_file(open(CONFIG_OVERRIDES_PATH, 'r'))
+        full_path = os.path.join(os.path.dirname(CODE_DIR), runspec_path)
+        self.settings = {}
+        self.lines_or_settings_to_output = []
+        self.read_config_file(open(full_path, 'r'))
         global cf
         cf = self
 
     def read_config_file(self, file):
-        self.settings = {}
-        self.lines_or_settings_to_output = []
         line_num = 0
         for line in file:
             line = line[:-1]
@@ -109,5 +111,3 @@ class ConfigHandler(object):
 
     def safe_environ_var(self, key):
         return os.environ[key] if key in os.environ else None
-
-

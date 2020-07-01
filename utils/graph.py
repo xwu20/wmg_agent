@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
-import numpy as np
 
 
 class Graph(object):
@@ -13,6 +12,7 @@ class Graph(object):
     def clear(self):
         self.entities = []
 
+
 class Entity(object):
     def __init__(self, type, row, col):
         self.data = None
@@ -22,4 +22,3 @@ class Entity(object):
         # It's used by the environment in assembling the observation.
         self.row = row
         self.col = col
-

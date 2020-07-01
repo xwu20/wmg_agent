@@ -19,7 +19,6 @@ REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
 TOTAL_STEPS = cf.val("TOTAL_STEPS")
 AGENT = cf.val("AGENT")
 ENV = cf.val("ENV")
-USE_TRAJECTORY_FORMATTER = cf.val("USE_TRAJECTORY_FORMATTER")
 ARCHIVE_ALL_MODELS = cf.val("ARCHIVE_ALL_MODELS")
 ANNEAL_LR = cf.val("ANNEAL_LR")
 if ANNEAL_LR:
@@ -33,10 +32,6 @@ class Worker(object):
         self.start_time = time.time()
         self.heldout_testing = False
         self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
-        if USE_TRAJECTORY_FORMATTER:
-            from utils.trajectory_formatter import TrajectoryFormatter
-            self.formatter = TrajectoryFormatter(self.observation_space_size, self.action_space_size)
-            self.observation_space_size = self.formatter.factor_sizes
         self.agent = self.create_agent('0')
         if self.heldout_testing:
             self.environment.test_environment = self.create_environment(ENV_MAJOR_RANDOM_SEED + 1000000, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
@@ -94,24 +89,24 @@ class Worker(object):
         elif ENV == "Sokoban_Env":
             from environments.sokoban import Sokoban_Env
             environment = Sokoban_Env(major_seed)
+        else:
+            print("Environment {} not found.".format(ENV))
+            exit(0)
         self.observation_space_size = environment.observation_space_size
         self.action_space_size = environment.action_space_size
         return environment
 
     def create_agent(self, agent_name):
         # Each new agent should be listed here.
-        if AGENT == "RandomAgent":
-            from agents.random import RandomAgent
-            return RandomAgent(action_space_size=self.action_space_size)
-        elif AGENT == "A3cAgent_S":
+        if AGENT == "A3cAgent_S":
             from agents.a3c_s import A3cAgent_S
             return A3cAgent_S(self.observation_space_size, self.action_space_size)
         elif AGENT == "A3cAgent":
             from agents.a3c import A3cAgent
             return A3cAgent(agent_name, self.observation_space_size, self.action_space_size)
-        elif AGENT == "PathfinderAgent":
-            from agents.pathfinder import PathfinderAgent
-            return PathfinderAgent(self.observation_space_size, self.action_space_size)
+        else:
+            print ('Agent {} not found.'.format(AGENT))
+            exit(0)
 
     def output(self, sz):
         if self.output_filename:
@@ -259,11 +254,6 @@ class Worker(object):
                     self.output_trajectory_file.write("{}, {}, {}, {}\n".format(self.next_obs, action_vec, self.reward, 1 * self.done))
                     self.next_obs = np.copy(self.observation)
 
-            # Reformat the observation, if necessary.
-            if USE_TRAJECTORY_FORMATTER:
-                self.observation = self.formatter.format_agent_observation(
-                    self.action, self.reward, self.done, self.observation)
-
             # Let the agent adapt to the effects of the action before a new episode can be initialized.
             if (manual_action_override is None) and train_agent:
                 self.agent.adapt(self.reward, self.done, self.observation)
@@ -281,9 +271,6 @@ class Worker(object):
         self.agent.reset_state()
         self.observation = self.environment.reset(repeat=False, episode_id=episode_id)
         self.obs_orig = self.observation
-        if USE_TRAJECTORY_FORMATTER:
-            self.formatter.reset_state()
-            self.observation = self.formatter.format_agent_observation(None, 0., 0, self.observation)
         self.draw()
 
     def draw(self):
