@@ -11,7 +11,7 @@ SAVE_MODELS_TO = models/new_wmg_flat_babyai.pth
 # worker.py
 AGENT = A3cAgent
 ENV = BabyAI_Env
-ENV_MAJOR_RANDOM_SEED = 1  # Use randint for non-deterministic behavior.
+ENV_MAJOR_RANDOM_SEED = 2  # Use randint for non-deterministic behavior.
 ENV_MINOR_RANDOM_SEED = 0
 AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 20  # 10000 20

@@ -63,7 +63,7 @@ until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_flat_babyai.py](test_wmg_on_flat_babyai.py)
 loads **models/wmg_flat_babyai.pth**,
-a WMG agent model trained for 1,400,000 environment interactions,
+a WMG agent model trained for 1,330,000 environment interactions,
 then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
