@@ -10,15 +10,6 @@ MIN_FINAL_REWARD_FOR_SUCCESS = 1.0
 LOAD_MODEL_FROM = models/gru_factored_babyai.pth
 SAVE_MODELS_TO = None
 
-# rl_train.py
-USE_DGD = False
-USE_DGD2 = False
-NUM_HPS = 15
-ARCHIVE_ALL_MODELS = False
-XT_LOAD_MODEL = False
-XT_LOAD_MODEL_WS = ws1133
-XT_LOAD_MODEL_STEP = 1000000
-
 # worker.py
 AGENT = A3cAgent
 ENV = BabyAI_Env

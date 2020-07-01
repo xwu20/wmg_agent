@@ -8,15 +8,6 @@ TYPE_OF_RUN = train  # train, test, test_episodes, render
 LOAD_MODEL_FROM = None
 SAVE_MODELS_TO = models/new_wmg_flat_babyai.pth
 
-# rl_train.py
-USE_DGD = False
-USE_DGD2 = False
-NUM_HPS = 15
-ARCHIVE_ALL_MODELS = False
-XT_LOAD_MODEL = False
-XT_LOAD_MODEL_WS = ws1133
-XT_LOAD_MODEL_STEP = 1000000
-
 # worker.py
 AGENT = A3cAgent
 ENV = BabyAI_Env
