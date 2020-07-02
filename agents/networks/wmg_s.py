@@ -14,11 +14,14 @@ TFM_ATTENTION_HEAD_SIZE = cf.val("TFM_ATTENTION_HEAD_SIZE")
 TFM_NUM_ATTENTION_HEADS = cf.val("TFM_NUM_ATTENTION_HEADS")
 TFM_NUM_LAYERS = cf.val("TFM_NUM_LAYERS")
 TFM_HIDDEN_SIZE = cf.val("TFM_HIDDEN_SIZE")
+
 WMG2_MAX_AGE = cf.val("WMG2_MAX_AGE")
 WMG2_MAX_CONCEPTS = cf.val("WMG2_MAX_CONCEPTS")
 if WMG2_MAX_CONCEPTS > 0:  # WMG2_CONCEPT_SIZE will be used only if WMG2_MAX_CONCEPTS > 0.
     WMG2_CONCEPT_SIZE = cf.val("WMG2_CONCEPT_SIZE")
 WMG2_OUTPUT_LAYER_SIZE = cf.val("WMG2_OUTPUT_LAYER_SIZE")
+
+
 
 
 class ConceptMatrix(object):
@@ -55,10 +58,12 @@ class WMG_Network_S(nn.Module):
         super(WMG_Network_S, self).__init__()
         self.factored_observations = factored_observations
         self.node_vec_size = TFM_NUM_ATTENTION_HEADS * TFM_ATTENTION_HEAD_SIZE
+
         if WMG2_OUTPUT_LAYER_SIZE > 0:
             self.output_size = WMG2_OUTPUT_LAYER_SIZE
         else:
             self.output_size = self.node_vec_size
+
         if self.factored_observations:
             self.factor_sizes = observation_space_size.entity_type_sizes
             self.embedding_layers = nn.ModuleList()
@@ -144,6 +149,8 @@ class WMG_Network_S(nn.Module):
             output = tfm_output
 
         return output, new_concept_matrix
+
+
 
     def init_state(self):
         if WMG2_MAX_CONCEPTS > 0:

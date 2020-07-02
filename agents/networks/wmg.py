@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
 from agents.networks.shared.transformer import Transformer
 from agents.networks.shared.general import LinearLayer
 from agents.networks.shared.general import ActorCriticLayers
@@ -13,6 +14,7 @@ TFM_ATTENTION_HEAD_SIZE = cf.val("TFM_ATTENTION_HEAD_SIZE")
 TFM_NUM_ATTENTION_HEADS = cf.val("TFM_NUM_ATTENTION_HEADS")
 TFM_NUM_LAYERS = cf.val("TFM_NUM_LAYERS")
 TFM_HIDDEN_SIZE = cf.val("TFM_HIDDEN_SIZE")
+
 TFM_INITIALIZER_RANGE = cf.val("TFM_INITIALIZER_RANGE")
 AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
 TFM_OUTPUT_ALL_NODES = cf.val("TFM_OUTPUT_ALL_NODES")
@@ -36,12 +38,15 @@ class MemoryBank(object):
         self.memories[self.idx] = memory
         self.idx = (self.idx + 1) % WMG_MAX_MEMS
 
+
+
     def copy(self):
         g = MemoryBank(self.mem_len)
         for i in range(WMG_MAX_MEMS):
             g.memories[i] = self.memories[i]
         g.idx = self.idx
         return g
+
 
     def detach_from_history(self):
         for i in range(WMG_MAX_MEMS):
@@ -53,6 +58,12 @@ class WMG_Network(nn.Module):
         super(WMG_Network, self).__init__()
         self.factored_observations = factored_observations
         self.node_vec_size = TFM_NUM_ATTENTION_HEADS * TFM_ATTENTION_HEAD_SIZE
+
+
+
+
+
+
         if self.factored_observations:
             self.global_vec_size = observation_space_size[0]
             self.factor_vec_size = observation_space_size[1]
@@ -69,18 +80,32 @@ class WMG_Network(nn.Module):
             self.factor_embed_layer = LinearLayer(self.factor_vec_size, self.node_vec_size)
         self.memory_embed_layer = LinearLayer(self.memory_vec_size + self.age_vec_size, self.node_vec_size)
 
+
         # Prepare the age vectors.
         self.age = []
+
+
         for i in range(WMG_MAX_MEMS):
             pos = np.zeros(self.age_vec_size, np.float32)
             pos[i] = 1.
             self.age.append(torch.tensor(pos))
+
+
 
         self.tfm = Transformer(TFM_NUM_ATTENTION_HEADS, TFM_ATTENTION_HEAD_SIZE,
                                TFM_NUM_LAYERS, TFM_HIDDEN_SIZE)
         self.actor_critic_layers = ActorCriticLayers(self.node_vec_size, 2, AC_HIDDEN_LAYER_SIZE, action_space_size)
         if not WMG_HIST_MEMS:
             self.memory_def_layer = LinearLayer(self.node_vec_size, self.memory_vec_size)
+
+
+
+
+
+
+
+
+
 
     def forward(self, observation, old_state):
         # Gather the node embeddings.
@@ -92,8 +117,14 @@ class WMG_Network(nn.Module):
         else:
             global_obs_tens = torch.tensor(np.float32(observation))
             node_vec_list.append(self.global_embed_layer(global_obs_tens))
+
+
+
+
         for i in range(WMG_MAX_MEMS):
             node_vec_list.append(self.memory_embed_layer(torch.cat((old_state.get_memory(i), self.age[i]))))
+
+
 
         # Reshape the tensor.
         graph_input = torch.cat(node_vec_list).view(1, len(node_vec_list), self.node_vec_size)
@@ -103,6 +134,7 @@ class WMG_Network(nn.Module):
 
         # Pass only the global (first) node's output to the subsequent layers.
         tfm_output = graph_output[:,0,:]  # From the global node only.
+
         value_est, policy = self.actor_critic_layers(tfm_output)
         if WMG_HIST_MEMS:
             new_memory = torch.tanh(global_obs_tens)
@@ -113,12 +145,20 @@ class WMG_Network(nn.Module):
         new_state = old_state.copy()
         new_state.add_memory(new_memory)
 
+
+
+
         return value_est, policy, new_state
+
+
 
     def init_state(self):
         state = MemoryBank(self.memory_vec_size)
         return state
 
+
+
     def detach_from_history(self, state):
         state.detach_from_history()
         return state
+

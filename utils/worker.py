@@ -17,14 +17,13 @@ ENV_MAJOR_RANDOM_SEED = cf.val("ENV_MAJOR_RANDOM_SEED")
 ENV_MINOR_RANDOM_SEED = cf.val("ENV_MINOR_RANDOM_SEED")
 REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
 TOTAL_STEPS = cf.val("TOTAL_STEPS")
-AGENT = cf.val("AGENT")
 ENV = cf.val("ENV")
 ANNEAL_LR = cf.val("ANNEAL_LR")
 if ANNEAL_LR:
     ANNEALING_START = cf.val("ANNEALING_START")
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
-CONSOLIDATE = True
+from agents.a3c import A3cAgent
 
 
 class Worker(object):
@@ -33,14 +32,11 @@ class Worker(object):
         self.start_time = time.time()
         self.heldout_testing = False
         self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
-        self.agent = self.create_agent('0')
+        self.agent = A3cAgent(self.observation_space_size, self.action_space_size)
         if self.heldout_testing:
             self.environment.test_environment = self.create_environment(ENV_MAJOR_RANDOM_SEED + 1000000, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
-            self.environment.test_agent = self.create_agent("tester")
-            if CONSOLIDATE:
-                self.environment.test_agent.network = self.agent.network
-            else:
-                self.environment.test_agent.global_net = self.agent.global_net
+            self.environment.test_agent = A3cAgent(self.observation_space_size, self.action_space_size)
+            self.environment.test_agent.network = self.agent.network
         self.step_num = 0
         self.total_reward = 0.
         self.num_steps = 0
@@ -99,22 +95,6 @@ class Worker(object):
         self.observation_space_size = environment.observation_space_size
         self.action_space_size = environment.action_space_size
         return environment
-
-    def create_agent(self, agent_name):
-        if CONSOLIDATE:
-            # Temporary, to combine agents.
-            from agents.a3c_s import A3cAgent
-            return A3cAgent(self.observation_space_size, self.action_space_size)
-        # Each new agent should be listed here.
-        if AGENT == "A3cAgent_S":
-            from agents.a3c_s import A3cAgent
-            return A3cAgent(self.observation_space_size, self.action_space_size)
-        elif AGENT == "A3cAgent":
-            from agents.a3c import A3cAgent
-            return A3cAgent(agent_name, self.observation_space_size, self.action_space_size)
-        else:
-            print ('Agent {} not found.'.format(AGENT))
-            exit(0)
 
     def output(self, sz):
         if self.output_filename:

@@ -9,7 +9,6 @@ LOAD_MODEL_FROM = None
 SAVE_MODELS_TO = models/new_gru_factored_babyai.pth
 
 # worker.py
-AGENT = A3cAgent
 ENV = BabyAI_Env
 ENV_MAJOR_RANDOM_SEED = 1  # Use randint for non-deterministic behavior.
 ENV_MINOR_RANDOM_SEED = 0

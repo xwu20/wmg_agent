@@ -1,42 +1,60 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
-import torch
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.config_handler import cf
+REFACTORED = cf.val("REFACTORED")
+AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 BPTT_PERIOD = cf.val("BPTT_PERIOD")
 LEARNING_RATE = cf.val("LEARNING_RATE")
 DISCOUNT_FACTOR = cf.val("DISCOUNT_FACTOR")
 GRADIENT_CLIP = cf.val("GRADIENT_CLIP")
 WEIGHT_DECAY = cf.val("WEIGHT_DECAY")
-OBS_FEEDBACK = cf.val("OBS_FEEDBACK")
 AGENT_NET = cf.val("AGENT_NET")
 ENTROPY_REG = cf.val("ENTROPY_REG")
 REWARD_SCALE = cf.val("REWARD_SCALE")
 ADAM_EPS = cf.val("ADAM_EPS")
+from agents.networks.shared.general import LinearActorCriticLayer
+from utils.graph import Graph
+ANNEAL_LR = cf.val("ANNEAL_LR")
+if ANNEAL_LR:
+    LR_GAMMA = cf.val("LR_GAMMA")
+    from torch.optim.lr_scheduler import StepLR
+
+torch.manual_seed(AGENT_RANDOM_SEED)
 
 
 class A3cAgent(object):
-    def __init__(self, agent_name, observation_space_size, action_space_size):
-        self.name = agent_name
-        self.factored_observations = isinstance(observation_space_size, tuple)
-        self.external_observation_space_size = observation_space_size
+    def __init__(self, observation_space_size, action_space_size):
+        self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, tuple) or isinstance(observation_space_size, Graph)
         self.internal_observation_space_size = observation_space_size
-        if OBS_FEEDBACK and not self.factored_observations:
-            self.internal_observation_space_size += action_space_size + 1
         self.action_space_size = action_space_size
-        self.global_net = None
-        if agent_name == '0':
-            self.global_net = self.create_network().share_memory()
-        self.local_net = self.create_network()
-        if self.global_net is not None:
-            self.optimizer = torch.optim.Adam(self.global_net.parameters(), lr=LEARNING_RATE,
-                                              weight_decay=WEIGHT_DECAY, eps=ADAM_EPS)
-        print("{:11,d} trainable parameters".format(self.count_parameters(self.local_net)))
+        if REFACTORED:
+            self.network = self.create_network()
+        else:
+            self.network = self.create_network_old()
+        self.optimizer = torch.optim.Adam(self.network.parameters(), lr=LEARNING_RATE,
+                                          weight_decay=WEIGHT_DECAY, eps=ADAM_EPS)
+        if ANNEAL_LR:
+            self.scheduler = StepLR(self.optimizer, step_size=1, gamma=LR_GAMMA)
+        print("{:11,d} trainable parameters".format(self.count_parameters(self.network)))
 
     def create_network(self):
+        # if AGENT_NET == "GRU_Network":
+        #     from agents.networks.gru import GRU_Network
+        #     core = GRU_Network(self.internal_observation_space_size, self.action_space_size)
+        if AGENT_NET == "WMG_Network_S":
+            from agents.networks.wmg_s import WMG_Network_S
+            core = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+        else:
+            assert False  # The specified agent network was not found.
+        actor_critic_layers = LinearActorCriticLayer(core.output_size, self.action_space_size)
+        return AgentModel(core, actor_critic_layers)
+
+    def create_network_old(self):
         if AGENT_NET == "GRU_Network":
             from agents.networks.gru import GRU_Network
             return GRU_Network(self.internal_observation_space_size, self.action_space_size)
@@ -56,43 +74,22 @@ class A3cAgent(object):
         self.rewards = []
 
     def reset_state(self):
-        self.copy_global_weights()
-        self.net_state = self.local_net.init_state()
+        self.net_state = self.network.init_state()
         self.last_action = None
-        self.last_reward = 0.
         self.reset_adaptation_state()
         return 0
 
-    def copy_global_weights(self):
-        self.local_net.load_state_dict(self.global_net.state_dict())
+    def load_model(self, input_model):
+        state_dict = torch.load(input_model)
+        self.network.load_state_dict(state_dict)
+        print('loaded agent model from {}'.format(input_model))
 
-    def save_model(self, filename):
-        torch.save(self.global_net.state_dict(), filename)
-
-    def load_model(self, filename):
-        state_dict = torch.load(filename)
-        self.global_net.load_state_dict(state_dict)
-        print('loaded')
-
-    def expand_observation(self, external_observation):
-        if self.factored_observations or not OBS_FEEDBACK:
-            return external_observation
-        else:
-            id = 0
-            expanded_observation = np.zeros(self.internal_observation_space_size)
-            expanded_observation[0:self.external_observation_space_size] = external_observation[0:self.external_observation_space_size]
-            id += self.external_observation_space_size
-            if self.last_action is not None:
-                expanded_observation[id + self.last_action] = 1.
-            id += self.action_space_size
-            expanded_observation[id] = self.last_reward
-            id += 1
-            assert id == self.internal_observation_space_size
-            return expanded_observation
+    def save_model(self, output_model):
+        torch.save(self.network.state_dict(), output_model)
 
     def step(self, observation):
-        self.last_observation = self.expand_observation(observation)
-        self.value_tensor, logits, self.net_state = self.local_net(self.last_observation, self.net_state)
+        self.last_observation = observation
+        self.value_tensor, logits, self.net_state = self.network(self.last_observation, self.net_state)
         self.logp_tensor = F.log_softmax(logits, dim=-1)
         action_probs = torch.exp(self.logp_tensor)
         self.action_tensor = action_probs.multinomial(num_samples=1).data[0]
@@ -101,9 +98,6 @@ class A3cAgent(object):
 
     def adapt(self, reward, done, next_observation):
         reward *= REWARD_SCALE
-
-        # Copy these to be included in the next observation (if the episode doesn't get reset).
-        self.last_reward = reward
 
         # print("OBS = {}".format(self.last_observation))
         # print("ACT = {}".format(self.last_action))
@@ -127,19 +121,18 @@ class A3cAgent(object):
 
     def adapt_on_end_of_episode(self):
         # Train with a next state value of zero, because there aren't any rewards after the end of the episode.
-        # Train. (reset_state will get called after this)
+        # Reset_state will get called after this.
         self.train(0.)
 
     def adapt_on_end_of_sequence(self, next_observation):
         # Peek at the state value of the next observation, for TD calculation.
-        next_expanded_observation = self.expand_observation(next_observation)
-        next_value, _, _ = self.local_net(next_expanded_observation, self.net_state)
+        next_value, _, _ = self.network(next_observation, self.net_state)
 
         # Train.
         self.train(next_value.squeeze().data.numpy())
 
         # Stop the gradients from flowing back into this window that we just trained on.
-        self.net_state = self.local_net.detach_from_history(self.net_state)
+        self.net_state = self.network.detach_from_history(self.net_state)
 
         self.reset_adaptation_state()
 
@@ -147,13 +140,12 @@ class A3cAgent(object):
         loss = self.loss_function(next_value, torch.cat(self.values), torch.cat(self.logps), torch.cat(self.actions), np.asarray(self.rewards))
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.local_net.parameters(), GRADIENT_CLIP)
-
-        for param, shared_param in zip(self.local_net.parameters(), self.global_net.parameters()):
-            if shared_param.grad is None: shared_param._grad = param.grad  # sync gradients with global network
+        torch.nn.utils.clip_grad_norm_(self.network.parameters(), GRADIENT_CLIP)
         self.optimizer.step()
 
-        self.copy_global_weights()
+    def anneal_lr(self):
+        print('Scaling down the learning rate by {}'.format(LR_GAMMA))
+        self.scheduler.step()
 
     def loss_function(self, next_value, values, logps, actions, rewards):
         td_target = next_value
@@ -185,3 +177,20 @@ class A3cAgent(object):
         entropy_loss = entropy_losses.sum()
         return policy_loss + 0.5 * value_loss - ENTROPY_REG * entropy_loss
 
+class AgentModel(nn.Module):
+    def __init__(self, core, actor_critic):
+        super(AgentModel, self).__init__()
+        self.repres = core  # Network core representation module.
+        self.actor_critic = actor_critic
+
+    def forward(self, input, old_state):
+        h, new_state = self.repres(input, old_state)  # The base network may be recurrent.
+        value_est, policy = self.actor_critic(h)
+        return value_est, policy, new_state
+
+    def init_state(self):
+        return self.repres.init_state()
+
+    def detach_from_history(self, old_state):
+        new_state = self.repres.detach_from_history(old_state)
+        return new_state

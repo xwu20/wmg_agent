@@ -9,7 +9,6 @@ LOAD_MODEL_FROM = None
 SAVE_MODELS_TO = models/new_wmg_sokoban.pth
 
 # worker.py
-AGENT = A3cAgent_S
 ENV = Sokoban_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0

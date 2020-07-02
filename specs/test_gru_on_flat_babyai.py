@@ -11,7 +11,6 @@ LOAD_MODEL_FROM = models/gru_flat_babyai.pth
 SAVE_MODELS_TO = None
 
 # worker.py
-AGENT = A3cAgent
 ENV = BabyAI_Env
 ENV_MAJOR_RANDOM_SEED = 1
 ENV_MINOR_RANDOM_SEED = 0
