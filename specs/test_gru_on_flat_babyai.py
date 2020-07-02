@@ -22,6 +22,7 @@ ANNEAL_LR = False
 LR_GAMMA = 0.98
 
 # A3cAgent
+REFACTORED = False
 AGENT_NET = GRU_Network
 
 # BabyAI_Env

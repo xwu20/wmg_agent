@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
 import torch
 import numpy as np
 import torch.nn as nn
@@ -90,12 +92,10 @@ class A3cAgent(object):
 
     def step(self, observation):
         self.last_observation = self.expand_observation(observation)
-
         self.value_tensor, logits, self.net_state = self.local_net(self.last_observation, self.net_state)
         self.logp_tensor = F.log_softmax(logits, dim=-1)
         action_probs = torch.exp(self.logp_tensor)
         self.action_tensor = action_probs.multinomial(num_samples=1).data[0]
-
         self.last_action = self.action_tensor.numpy()[0]
         return self.last_action
 

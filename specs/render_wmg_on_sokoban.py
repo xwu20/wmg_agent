@@ -20,6 +20,7 @@ ANNEAL_LR = False
 LR_GAMMA = 0.98
 
 # A3cAgent
+REFACTORED = True
 AGENT_NET = WMG_Network_S
 
 # Sokoban_Env

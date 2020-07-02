@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.config_handler import cf
+REFACTORED = cf.val("REFACTORED")
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 BPTT_PERIOD = cf.val("BPTT_PERIOD")
 LEARNING_RATE = cf.val("LEARNING_RATE")
@@ -16,12 +17,7 @@ AGENT_NET = cf.val("AGENT_NET")
 ENTROPY_REG = cf.val("ENTROPY_REG")
 REWARD_SCALE = cf.val("REWARD_SCALE")
 ADAM_EPS = cf.val("ADAM_EPS")
-NUM_AC_LAYERS = cf.val("NUM_AC_LAYERS")
-if NUM_AC_LAYERS > 1:
-    from agents.networks.shared.general import SharedActorCriticLayers
-    AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
-else:
-    from agents.networks.shared.general import LinearActorCriticLayer
+from agents.networks.shared.general import LinearActorCriticLayer
 from utils.graph import Graph
 ANNEAL_LR = cf.val("ANNEAL_LR")
 if ANNEAL_LR:
@@ -31,12 +27,16 @@ if ANNEAL_LR:
 torch.manual_seed(AGENT_RANDOM_SEED)
 
 
-class A3cAgent_S(object):
+class A3cAgent(object):
     def __init__(self, observation_space_size, action_space_size):
-        self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, Graph)
+        self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, tuple) or isinstance(observation_space_size, Graph)
         self.internal_observation_space_size = observation_space_size
         self.action_space_size = action_space_size
-        self.network = self.create_network()
+        if REFACTORED:
+            self.network = self.create_network()
+        else:
+            # network = self.create_network_old()  # To keep the old seeds, for exact test results.
+            self.network = self.create_network_old()
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=LEARNING_RATE,
                                           weight_decay=WEIGHT_DECAY, eps=ADAM_EPS)
         if ANNEAL_LR:
@@ -44,19 +44,25 @@ class A3cAgent_S(object):
         print("{:11,d} trainable parameters".format(self.count_parameters(self.network)))
 
     def create_network(self):
-        if AGENT_NET == "GRU_Network":
-            from agents.networks.gru import GRU_Network
-            repres = GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        elif AGENT_NET == "WMG_Network_S":
+        # if AGENT_NET == "GRU_Network":
+        #     from agents.networks.gru import GRU_Network
+        #     core = GRU_Network(self.internal_observation_space_size, self.action_space_size)
+        if AGENT_NET == "WMG_Network_S":
             from agents.networks.wmg_s import WMG_Network_S
-            repres = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+            core = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
         else:
             assert False  # The specified agent network was not found.
-        if NUM_AC_LAYERS == 1:
-            actor_critic_layers = LinearActorCriticLayer(repres.output_size, self.action_space_size)
-        else:
-            actor_critic_layers = SharedActorCriticLayers(repres.output_size, NUM_AC_LAYERS, AC_HIDDEN_LAYER_SIZE, self.action_space_size)
-        return AgentModel(repres, actor_critic_layers)
+        actor_critic_layers = LinearActorCriticLayer(core.output_size, self.action_space_size)
+        return AgentModel(core, actor_critic_layers)
+
+    def create_network_old(self):
+        if AGENT_NET == "GRU_Network":
+            from agents.networks.gru import GRU_Network
+            return GRU_Network(self.internal_observation_space_size, self.action_space_size)
+        if AGENT_NET == "WMG_Network":
+            from agents.networks.wmg import WMG_Network
+            return WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+        assert False  # The specified agent network was not found.
 
     def count_parameters(self, network):
         return sum(p.numel() for p in network.parameters() if p.requires_grad)
@@ -82,14 +88,6 @@ class A3cAgent_S(object):
     def save_model(self, output_model):
         torch.save(self.network.state_dict(), output_model)
 
-    def load_repres(self, input_repres):
-        state_dict = torch.load(input_repres)
-        self.network.repres.load_state_dict(state_dict)
-        print('loaded representation module from {}'.format(input_repres))
-
-    def save_repres(self, output_repres):
-        torch.save(self.network.repres.state_dict(), output_repres)
-
     def step(self, observation):
         self.last_observation = observation
         self.value_tensor, logits, self.net_state = self.network(self.last_observation, self.net_state)
@@ -101,6 +99,14 @@ class A3cAgent_S(object):
 
     def adapt(self, reward, done, next_observation):
         reward *= REWARD_SCALE
+
+        # print("OBS = {}".format(self.last_observation))
+        # print("ACT = {}".format(self.last_action))
+        # print("REW = {}".format(self.last_reward))
+        # print()
+
+        # print("g = {}".format(self.global_net.actor_linear.weight.grad))
+        # print("w =                                    {}".format(self.global_net.actor_linear.weight))
 
         # Buffer one frame of data for eventual training.
         self.values.append(self.value_tensor)
@@ -173,9 +179,9 @@ class A3cAgent_S(object):
         return policy_loss + 0.5 * value_loss - ENTROPY_REG * entropy_loss
 
 class AgentModel(nn.Module):
-    def __init__(self, repres, actor_critic):
+    def __init__(self, core, actor_critic):
         super(AgentModel, self).__init__()
-        self.repres = repres
+        self.repres = core  # Network core representation module.
         self.actor_critic = actor_critic
 
     def forward(self, input, old_state):

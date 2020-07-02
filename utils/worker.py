@@ -24,6 +24,8 @@ if ANNEAL_LR:
     ANNEALING_START = cf.val("ANNEALING_START")
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
+CONSOLIDATE = True
+
 
 class Worker(object):
     def __init__(self):
@@ -35,7 +37,10 @@ class Worker(object):
         if self.heldout_testing:
             self.environment.test_environment = self.create_environment(ENV_MAJOR_RANDOM_SEED + 1000000, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
             self.environment.test_agent = self.create_agent("tester")
-            self.environment.test_agent.global_net = self.agent.global_net
+            if CONSOLIDATE:
+                self.environment.test_agent.network = self.agent.network
+            else:
+                self.environment.test_agent.global_net = self.agent.global_net
         self.step_num = 0
         self.total_reward = 0.
         self.num_steps = 0
@@ -96,10 +101,14 @@ class Worker(object):
         return environment
 
     def create_agent(self, agent_name):
+        if CONSOLIDATE:
+            # Temporary, to combine agents.
+            from agents.a3c_s import A3cAgent
+            return A3cAgent(self.observation_space_size, self.action_space_size)
         # Each new agent should be listed here.
         if AGENT == "A3cAgent_S":
-            from agents.a3c_s import A3cAgent_S
-            return A3cAgent_S(self.observation_space_size, self.action_space_size)
+            from agents.a3c_s import A3cAgent
+            return A3cAgent(self.observation_space_size, self.action_space_size)
         elif AGENT == "A3cAgent":
             from agents.a3c import A3cAgent
             return A3cAgent(agent_name, self.observation_space_size, self.action_space_size)
