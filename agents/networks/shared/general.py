@@ -42,19 +42,6 @@ class ResidualLayer(nn.Module):
         return output
 
 
-class LinearActorCriticLayer(nn.Module):
-    def __init__(self, input_size, action_space_size):
-        super(LinearActorCriticLayer, self).__init__()
-        self.critic_linear = LinearLayer(input_size, 1)
-        self.actor_linear = LinearLayer(input_size, action_space_size)
-        self.actor_linear.layer.weight.data.fill_(0.)
-
-    def forward(self, input):
-        value = self.critic_linear(input)
-        policy = self.actor_linear(input)
-        return value, policy
-
-
 class ActorCriticLayers(nn.Module):
     def __init__(self, input_size, num_layers, hidden_layer_size, action_space_size):
         super(ActorCriticLayers, self).__init__()

@@ -19,8 +19,10 @@ ANNEAL_LR = False
 LR_GAMMA = 0.98
 
 # A3cAgent
-REFACTORED = False
 AGENT_NET = WMG_Network
+
+# WMG
+V2 = False
 
 # BabyAI_Env
 BABYAI_ENV_LEVEL = BabyAI-GoToLocal-v0

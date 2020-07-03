@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.config_handler import cf
-REFACTORED = cf.val("REFACTORED")
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 BPTT_PERIOD = cf.val("BPTT_PERIOD")
 LEARNING_RATE = cf.val("LEARNING_RATE")
@@ -17,8 +16,6 @@ AGENT_NET = cf.val("AGENT_NET")
 ENTROPY_REG = cf.val("ENTROPY_REG")
 REWARD_SCALE = cf.val("REWARD_SCALE")
 ADAM_EPS = cf.val("ADAM_EPS")
-from agents.networks.shared.general import LinearActorCriticLayer
-from utils.graph import Graph
 ANNEAL_LR = cf.val("ANNEAL_LR")
 if ANNEAL_LR:
     LR_GAMMA = cf.val("LR_GAMMA")
@@ -29,28 +26,14 @@ torch.manual_seed(AGENT_RANDOM_SEED)
 
 class A3cAgent(object):
     def __init__(self, observation_space_size, action_space_size):
-        self.factored_observations = isinstance(observation_space_size, list) or isinstance(observation_space_size, tuple) or isinstance(observation_space_size, Graph)
-        self.internal_observation_space_size = observation_space_size
-        self.action_space_size = action_space_size
-        if REFACTORED:
-            # The model is a core network followed by the final AC layers.
-            if AGENT_NET == "WMG_Network":
-                from agents.networks.wmg import WMG_Network
-                core = WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-            else:
-                assert False  # The specified agent network was not found.
-            actor_critic_layers = LinearActorCriticLayer(core.output_size, self.action_space_size)
-            self.network = AgentModel(core, actor_critic_layers)
+        if AGENT_NET == "GRU_Network":
+            from agents.networks.gru import GRU_Network
+            self.network = GRU_Network(observation_space_size, action_space_size)
+        elif AGENT_NET == "WMG_Network":
+            from agents.networks.wmg import WMG_Network
+            self.network =  WMG_Network(observation_space_size, action_space_size)
         else:
-            # The model is a core network that contains the AC layers.
-            if AGENT_NET == "GRU_Network":
-                from agents.networks.gru import GRU_Network
-                self.network = GRU_Network(self.internal_observation_space_size, self.action_space_size)
-            elif AGENT_NET == "WMG_Network":
-                from agents.networks.wmg import WMG_Network
-                self.network =  WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-            else:
-                assert False  # The specified agent network was not found.
+            assert False  # The specified agent network was not found.
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=LEARNING_RATE,
                                           weight_decay=WEIGHT_DECAY, eps=ADAM_EPS)
         if ANNEAL_LR:
@@ -170,21 +153,3 @@ class A3cAgent(object):
         entropy_losses = -logps * torch.exp(logps)
         entropy_loss = entropy_losses.sum()
         return policy_loss + 0.5 * value_loss - ENTROPY_REG * entropy_loss
-
-class AgentModel(nn.Module):
-    def __init__(self, core, actor_critic):
-        super(AgentModel, self).__init__()
-        self.repres = core  # Network core representation module.
-        self.actor_critic = actor_critic
-
-    def forward(self, input, old_state):
-        h, new_state = self.repres(input, old_state)  # The base network may be recurrent.
-        value_est, policy = self.actor_critic(h)
-        return value_est, policy, new_state
-
-    def init_state(self):
-        return self.repres.init_state()
-
-    def detach_from_history(self, old_state):
-        new_state = self.repres.detach_from_history(old_state)
-        return new_state

@@ -21,8 +21,10 @@ ANNEAL_LR = False
 LR_GAMMA = 0.98
 
 # A3cAgent
-REFACTORED = True
 AGENT_NET = WMG_Network
+
+# WMG
+V2 = True
 
 # Sokoban_Env
 SOKOBAN_MAX_STEPS = 120
