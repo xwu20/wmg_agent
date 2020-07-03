@@ -33,35 +33,29 @@ class A3cAgent(object):
         self.internal_observation_space_size = observation_space_size
         self.action_space_size = action_space_size
         if REFACTORED:
-            self.network = self.create_network()
+            # The model is a core network followed by the final AC layers.
+            if AGENT_NET == "WMG_Network":
+                from agents.networks.wmg import WMG_Network
+                core = WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+            else:
+                assert False  # The specified agent network was not found.
+            actor_critic_layers = LinearActorCriticLayer(core.output_size, self.action_space_size)
+            self.network = AgentModel(core, actor_critic_layers)
         else:
-            self.network = self.create_network_old()
+            # The model is a core network that contains the AC layers.
+            if AGENT_NET == "GRU_Network":
+                from agents.networks.gru import GRU_Network
+                self.network = GRU_Network(self.internal_observation_space_size, self.action_space_size)
+            elif AGENT_NET == "WMG_Network":
+                from agents.networks.wmg import WMG_Network
+                self.network =  WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
+            else:
+                assert False  # The specified agent network was not found.
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=LEARNING_RATE,
                                           weight_decay=WEIGHT_DECAY, eps=ADAM_EPS)
         if ANNEAL_LR:
             self.scheduler = StepLR(self.optimizer, step_size=1, gamma=LR_GAMMA)
         print("{:11,d} trainable parameters".format(self.count_parameters(self.network)))
-
-    def create_network(self):
-        # if AGENT_NET == "GRU_Network":
-        #     from agents.networks.gru import GRU_Network
-        #     core = GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "WMG_Network_S":
-            from agents.networks.wmg_s import WMG_Network_S
-            core = WMG_Network_S(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        else:
-            assert False  # The specified agent network was not found.
-        actor_critic_layers = LinearActorCriticLayer(core.output_size, self.action_space_size)
-        return AgentModel(core, actor_critic_layers)
-
-    def create_network_old(self):
-        if AGENT_NET == "GRU_Network":
-            from agents.networks.gru import GRU_Network
-            return GRU_Network(self.internal_observation_space_size, self.action_space_size)
-        if AGENT_NET == "WMG_Network":
-            from agents.networks.wmg import WMG_Network
-            return WMG_Network(self.internal_observation_space_size, self.action_space_size, self.factored_observations)
-        assert False  # The specified agent network was not found.
 
     def count_parameters(self, network):
         return sum(p.numel() for p in network.parameters() if p.requires_grad)
