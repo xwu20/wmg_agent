@@ -67,7 +67,7 @@ class A3cAgent(object):
 
     def step(self, observation):
         self.last_observation = observation
-        self.value_tensor, logits, self.net_state = self.network(self.last_observation, self.net_state)
+        logits, self.value_tensor, self.net_state = self.network(self.last_observation, self.net_state)
         self.logp_tensor = F.log_softmax(logits, dim=-1)
         action_probs = torch.exp(self.logp_tensor)
         self.action_tensor = action_probs.multinomial(num_samples=1).data[0]
@@ -104,7 +104,7 @@ class A3cAgent(object):
 
     def adapt_on_end_of_sequence(self, next_observation):
         # Peek at the state value of the next observation, for TD calculation.
-        next_value, _, _ = self.network(next_observation, self.net_state)
+        _, next_value, _ = self.network(next_observation, self.net_state)
 
         # Train.
         self.train(next_value.squeeze().data.numpy())

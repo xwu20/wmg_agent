@@ -26,8 +26,8 @@ class LinearLayer(nn.Module):  # Adds weight initialization options on top of nn
         self.layer = nn.Linear(input_size, output_size)
         self.layer.bias.data.fill_(0.)
 
-    def forward(self, input):
-        output = self.layer(input)
+    def forward(self, x):
+        output = self.layer(x)
         return output
 
 
@@ -36,15 +36,15 @@ class ResidualLayer(nn.Module):
         super(ResidualLayer, self).__init__()
         self.linear_layer = LinearLayer(input_size, output_size)
 
-    def forward(self, input, prev_input):
-        output = self.linear_layer(input)
+    def forward(self, x, prev_input):
+        output = self.linear_layer(x)
         output += prev_input
         return output
 
 
-class ActorCriticLayers(nn.Module):
+class SeparateActorCriticLayers(nn.Module):
     def __init__(self, input_size, num_layers, hidden_layer_size, action_space_size):
-        super(ActorCriticLayers, self).__init__()
+        super(SeparateActorCriticLayers, self).__init__()
         assert num_layers == 2
         self.critic_linear_1 = LinearLayer(input_size, hidden_layer_size)
         self.critic_linear_2 = LinearLayer(hidden_layer_size, 1)
@@ -52,14 +52,14 @@ class ActorCriticLayers(nn.Module):
         self.actor_linear_2 = LinearLayer(hidden_layer_size, action_space_size)
         self.actor_linear_2.layer.weight.data.fill_(0.)
 
-    def forward(self, input):
-        value = self.critic_linear_1(input)
+    def forward(self, x):
+        value = self.critic_linear_1(x)
         value = F.relu(value)
         value = self.critic_linear_2(value)
-        policy = self.actor_linear_1(input)
+        policy = self.actor_linear_1(x)
         policy = F.relu(policy)
         policy = self.actor_linear_2(policy)
-        return value, policy
+        return policy, value
 
 
 class SharedActorCriticLayers(nn.Module):
@@ -71,9 +71,9 @@ class SharedActorCriticLayers(nn.Module):
         self.actor_linear_2 = LinearLayer(hidden_layer_size, action_space_size)
         self.actor_linear_2.layer.weight.data.fill_(0.)
 
-    def forward(self, input):
-        shared = self.linear_1(input)
+    def forward(self, x):
+        shared = self.linear_1(x)
         shared = F.relu(shared)
         value = self.critic_linear_2(shared)
         policy = self.actor_linear_2(shared)
-        return value, policy
+        return policy, value
