@@ -23,7 +23,6 @@ SOKOBAN_BOXES_REQUIRED = cf.val("SOKOBAN_BOXES_REQUIRED")
 SOKOBAN_OBSERVATION_FORMAT = cf.val("SOKOBAN_OBSERVATION_FORMAT")
 SOKOBAN_REWARD_PER_STEP = cf.val("SOKOBAN_REWARD_PER_STEP")
 SOKOBAN_REWARD_SUCCESS = cf.val("SOKOBAN_REWARD_SUCCESS")
-HP_TUNING_METRIC = cf.val("HP_TUNING_METRIC")
 
 PIXELS_PER_TILE = 6  # Each tile is one pixel in the original Sokoban images, 8 pixels per cell, and 10x10 cells in a puzzle.
 TILES_PER_CELL = 8
@@ -589,14 +588,3 @@ class Sokoban_Env(object):
         self.reset_online_test_sums()
 
         return ret
-
-    def get_hp_tuning_metric(self):
-        if HP_TUNING_METRIC == "MeanReward":
-            hp_tuning_metric = self.total_reward / self.total_steps
-        elif HP_TUNING_METRIC == "FinalReward":
-            hp_tuning_metric = self.reward_per_step
-        elif HP_TUNING_METRIC == "MeanSuccessRate":
-            hp_tuning_metric = 100. * self.total_episodes_won / self.total_episodes
-        elif HP_TUNING_METRIC == "FinalSuccessRate":
-            hp_tuning_metric = self.success_rate
-        return (hp_tuning_metric, "{:7.3f}".format(hp_tuning_metric), "hp_tuning_metric")

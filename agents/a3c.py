@@ -7,13 +7,13 @@ import torch.nn.functional as F
 
 from utils.config_handler import cf
 AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
-BPTT_PERIOD = cf.val("BPTT_PERIOD")
+A3C_T_MAX = cf.val("A3C_T_MAX")
 LEARNING_RATE = cf.val("LEARNING_RATE")
 DISCOUNT_FACTOR = cf.val("DISCOUNT_FACTOR")
 GRADIENT_CLIP = cf.val("GRADIENT_CLIP")
 WEIGHT_DECAY = cf.val("WEIGHT_DECAY")
 AGENT_NET = cf.val("AGENT_NET")
-ENTROPY_REG = cf.val("ENTROPY_REG")
+ENTROPY_TERM_STRENGTH = cf.val("ENTROPY_TERM_STRENGTH")
 REWARD_SCALE = cf.val("REWARD_SCALE")
 ADAM_EPS = cf.val("ADAM_EPS")
 ANNEAL_LR = cf.val("ANNEAL_LR")
@@ -25,6 +25,7 @@ torch.manual_seed(AGENT_RANDOM_SEED)
 
 
 class A3cAgent(object):
+    ''' A single-worker version of Asynchronous Actor-Critic '''
     def __init__(self, observation_space_size, action_space_size):
         if AGENT_NET == "GRU_Network":
             from agents.networks.gru import GRU_Network
@@ -93,7 +94,7 @@ class A3cAgent(object):
 
         if done:
             self.adapt_on_end_of_episode()
-        elif self.num_training_frames_in_buffer == BPTT_PERIOD:
+        elif self.num_training_frames_in_buffer == A3C_T_MAX:
             self.adapt_on_end_of_sequence(next_observation)
 
     def adapt_on_end_of_episode(self):
@@ -152,4 +153,4 @@ class A3cAgent(object):
 
         entropy_losses = -logps * torch.exp(logps)
         entropy_loss = entropy_losses.sum()
-        return policy_loss + 0.5 * value_loss - ENTROPY_REG * entropy_loss
+        return policy_loss + 0.5 * value_loss - ENTROPY_TERM_STRENGTH * entropy_loss

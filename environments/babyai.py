@@ -719,4 +719,3 @@ class BabyAI_Env(object):
         self.reset_online_test_sums()
 
         return ret
-

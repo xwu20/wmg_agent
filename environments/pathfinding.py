@@ -5,7 +5,6 @@ import random
 
 from utils.config_handler import cf
 NUM_PATTERNS = cf.val("NUM_PATTERNS")
-HP_TUNING_METRIC = cf.val("HP_TUNING_METRIC")
 
 PATTERN_LENGTH = 7
 
@@ -263,19 +262,3 @@ class Pathfinding_Env(object):
         self.reset_online_test_sums()
 
         return ret
-
-    def final_report(self):
-        sz = ''
-        for pattern in range(NUM_PATTERNS - 1):
-            incorrect = self.cumulative_counts[pattern][0]
-            correct = self.cumulative_counts[pattern][1]
-            rate = correct / (correct + incorrect)
-            sz += "{:6.5} ".format(rate)
-        return sz
-
-    def get_hp_tuning_metric(self):
-        if HP_TUNING_METRIC == "MeanReward":
-            hp_tuning_metric = 200.0 * self.total_reward / self.total_steps
-        if HP_TUNING_METRIC == "LastReward":
-            hp_tuning_metric = self.reward_percentage
-        return (hp_tuning_metric, "{:7.3f}".format(hp_tuning_metric), "hp_tuning_metric")

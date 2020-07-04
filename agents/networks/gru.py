@@ -9,7 +9,6 @@ from utils.config_handler import cf
 NUM_RNN_UNITS = cf.val("NUM_RNN_UNITS")
 AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
 OBS_EMBED_SIZE = cf.val("OBS_EMBED_SIZE")
-APPLY_RELU_TO_OBS_EMBED = cf.val("APPLY_RELU_TO_OBS_EMBED")
 
 
 class GRU_Network(nn.Module):
@@ -27,8 +26,6 @@ class GRU_Network(nn.Module):
         tens = torch.FloatTensor(obs).unsqueeze(0)
         if OBS_EMBED_SIZE > 0:
             tens = self.obs_emb(tens)
-            if APPLY_RELU_TO_OBS_EMBED:
-                tens = F.relu(tens)
         new_state = self.rnn(tens, old_state)
         value_est, policy = self.actor_critic_layers(new_state)
         return value_est, policy, new_state

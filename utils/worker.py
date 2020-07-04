@@ -13,8 +13,7 @@ from utils.config_handler import cf
 TYPE_OF_RUN = cf.val("TYPE_OF_RUN")
 LOAD_MODEL_FROM = cf.val("LOAD_MODEL_FROM")
 SAVE_MODELS_TO = cf.val("SAVE_MODELS_TO")
-ENV_MAJOR_RANDOM_SEED = cf.val("ENV_MAJOR_RANDOM_SEED")
-ENV_MINOR_RANDOM_SEED = cf.val("ENV_MINOR_RANDOM_SEED")
+ENV_RANDOM_SEED = cf.val("ENV_RANDOM_SEED")
 REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
 TOTAL_STEPS = cf.val("TOTAL_STEPS")
 ENV = cf.val("ENV")
@@ -31,10 +30,10 @@ class Worker(object):
         torch.manual_seed(AGENT_RANDOM_SEED)
         self.start_time = time.time()
         self.heldout_testing = False
-        self.environment = self.create_environment(ENV_MAJOR_RANDOM_SEED, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
+        self.environment = self.create_environment(ENV_RANDOM_SEED)
         self.agent = A3cAgent(self.observation_space_size, self.action_space_size)
         if self.heldout_testing:
-            self.environment.test_environment = self.create_environment(ENV_MAJOR_RANDOM_SEED + 1000000, ENV_MAJOR_RANDOM_SEED + ENV_MINOR_RANDOM_SEED)
+            self.environment.test_environment = self.create_environment(ENV_RANDOM_SEED + 1000000)
             self.environment.test_agent = A3cAgent(self.observation_space_size, self.action_space_size)
             self.environment.test_agent.network = self.agent.network
         self.step_num = 0
@@ -74,21 +73,19 @@ class Worker(object):
         file = open(self.output_filename, 'w')
         file.close()
 
-    def create_environment(self, major_seed=None, minor_seed=None):
+    def create_environment(self, seed=None):
         # Each new environment should be listed here.
-        # minor_seed can be used to randomize part of the environment on each episode
-        # (like the agent's initial location) without changing the environment structure.
         if ENV == "Pathfinding_Env":
             from environments.pathfinding import Pathfinding_Env
-            environment = Pathfinding_Env(major_seed)
+            environment = Pathfinding_Env(seed)
         elif ENV == "BabyAI_Env":
             from environments.babyai import BabyAI_Env
-            environment = BabyAI_Env(major_seed)
+            environment = BabyAI_Env(seed)
             HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
             self.heldout_testing = HELDOUT_TESTING
         elif ENV == "Sokoban_Env":
             from environments.sokoban import Sokoban_Env
-            environment = Sokoban_Env(major_seed)
+            environment = Sokoban_Env(seed)
         else:
             print("Environment {} not found.".format(ENV))
             exit(0)
@@ -218,8 +215,6 @@ class Worker(object):
         for i in range(max_steps):
             if self.step_num == TOTAL_STEPS:
                 print("Completed {} steps".format(TOTAL_STEPS))
-                if train_agent:
-                    self.report_final()
                 return
 
             # Get an action.
@@ -265,14 +260,6 @@ class Worker(object):
         if self.t:
             self.t.clear()
             self.environment.draw()
-
-    def report_final(self):
-        if hasattr(self.environment, 'get_hp_tuning_metric'):
-            metric = self.environment.get_hp_tuning_metric()
-            formatted_value = metric[1]
-            label = metric[2]
-            HP_TUNING_METRIC = cf.val("HP_TUNING_METRIC")
-            print("HP tuning metric = {} {}".format(formatted_value, HP_TUNING_METRIC))
 
     def monitor(self, reward):
         self.step_num += 1

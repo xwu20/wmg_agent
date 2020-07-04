@@ -12,10 +12,10 @@ from utils.graph import Graph
 
 from utils.config_handler import cf
 V2 = cf.val("V2")
-TFM_ATTENTION_HEAD_SIZE = cf.val("TFM_ATTENTION_HEAD_SIZE")
-TFM_NUM_ATTENTION_HEADS = cf.val("TFM_NUM_ATTENTION_HEADS")
-TFM_NUM_LAYERS = cf.val("TFM_NUM_LAYERS")
-TFM_HIDDEN_SIZE = cf.val("TFM_HIDDEN_SIZE")
+WMG_ATTENTION_HEAD_SIZE = cf.val("WMG_ATTENTION_HEAD_SIZE")
+WMG_NUM_ATTENTION_HEADS = cf.val("WMG_NUM_ATTENTION_HEADS")
+WMG_NUM_LAYERS = cf.val("WMG_NUM_LAYERS")
+WMG_HIDDEN_SIZE = cf.val("WMG_HIDDEN_SIZE")
 AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
 WMG_MAX_OBS = cf.val("WMG_MAX_OBS")
 WMG_MAX_MEMOS = cf.val("WMG_MAX_MEMOS")
@@ -84,7 +84,7 @@ class WMG_Network(nn.Module):
             isinstance(observation_space_size, list) or \
             isinstance(observation_space_size, tuple) or \
             isinstance(observation_space_size, Graph)
-        self.tfm_vec_size = TFM_NUM_ATTENTION_HEADS * TFM_ATTENTION_HEAD_SIZE
+        self.tfm_vec_size = WMG_NUM_ATTENTION_HEADS * WMG_ATTENTION_HEAD_SIZE
 
         if V2:
             assert self.factored_observations
@@ -138,8 +138,8 @@ class WMG_Network(nn.Module):
                 pos[i] = 1.
                 self.age.append(torch.tensor(pos))
 
-        self.tfm = Transformer(TFM_NUM_ATTENTION_HEADS, TFM_ATTENTION_HEAD_SIZE,
-                               TFM_NUM_LAYERS, TFM_HIDDEN_SIZE)
+        self.tfm = Transformer(WMG_NUM_ATTENTION_HEADS, WMG_ATTENTION_HEAD_SIZE,
+                               WMG_NUM_LAYERS, WMG_HIDDEN_SIZE)
 
         if not V2:
             self.actor_critic_layers = ActorCriticLayers(self.tfm_vec_size, 2, AC_HIDDEN_LAYER_SIZE, action_space_size)
