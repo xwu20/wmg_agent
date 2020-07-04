@@ -11,12 +11,10 @@ SAVE_MODELS_TO = None
 # worker.py
 ENV = Pathfinding_Env
 ENV_RANDOM_SEED = 1
-ENV_MINOR_RANDOM_SEED = 0
 AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 120  # 1200 120
 TOTAL_STEPS = 1200  # 12000 1200
 ANNEAL_LR = False
-LR_GAMMA = 0.98
 
 # A3cAgent
 AGENT_NET = WMG_Network
@@ -32,8 +30,6 @@ USE_SUCCESS_RATE = False
 HELDOUT_TESTING = False
 
 ###  HYPERPARAMETERS  (tunable)  ###
-
-# WMG_Network ##
 
 # Agents in general
 A3C_T_MAX = 16

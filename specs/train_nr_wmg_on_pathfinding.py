@@ -15,7 +15,6 @@ AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 120  # 100000 120
 TOTAL_STEPS = 600  # 20000000 600
 ANNEAL_LR = False
-LR_GAMMA = 0.98
 
 # A3cAgent
 AGENT_NET = WMG_Network
@@ -31,8 +30,6 @@ USE_SUCCESS_RATE = False
 HELDOUT_TESTING = False
 
 ###  HYPERPARAMETERS  (tunable)  ###
-
-# WMG_Network ##
 
 # Agents in general
 A3C_T_MAX = 16

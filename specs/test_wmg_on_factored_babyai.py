@@ -17,7 +17,6 @@ AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 1
 TOTAL_STEPS = 1
 ANNEAL_LR = False
-LR_GAMMA = 0.98
 
 # A3cAgent
 AGENT_NET = WMG_Network
@@ -35,8 +34,6 @@ OBS_ENCODER = Factored
 BINARY_REWARD = True
 
 ###  HYPERPARAMETERS  (tunable)  ###
-
-# WMG_Network ##
 
 # Agents in general
 A3C_T_MAX = 6

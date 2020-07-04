@@ -15,7 +15,6 @@ AGENT_RANDOM_SEED = 1
 REPORTING_INTERVAL = 50  # 10000 50
 TOTAL_STEPS = 250  # 2500000 250
 ANNEAL_LR = False
-LR_GAMMA = 0.98
 
 # A3cAgent
 AGENT_NET = GRU_Network
@@ -30,8 +29,6 @@ OBS_ENCODER = FactoredThenFlattened
 BINARY_REWARD = True
 
 ###  HYPERPARAMETERS  (tunable)  ###
-
-# GRU_Network ##
 
 # Agents in general
 A3C_T_MAX = 3
