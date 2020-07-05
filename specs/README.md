@@ -94,7 +94,7 @@ The success rate should be about 99%.
 
 ## Sokoban runspecs
 
-![](../images/Sokoban.png)
+![](../images/sokoban.png)
 
 [train_wmg_on_sokoban.py](train_wmg_on_sokoban.py)
 trains a new WMG agent on Sokoban puzzles drawn randomly 
