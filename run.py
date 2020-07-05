@@ -12,8 +12,8 @@ if num_args != 1:
     exit(1)
 
 # Read the runspec.
-from utils.config_handler import ConfigHandler
-ConfigHandler(sys.argv[1])
+from utils.spec_reader import SpecReader
+SpecReader(sys.argv[1])
 
 # Execute the runspec.
 from utils.worker import Worker

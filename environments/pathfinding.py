@@ -3,8 +3,8 @@
 import numpy as np
 import random
 
-from utils.config_handler import cf
-NUM_PATTERNS = cf.val("NUM_PATTERNS")
+from utils.spec_reader import spec
+NUM_PATTERNS = spec.val("NUM_PATTERNS")
 
 PATTERN_LENGTH = 7
 

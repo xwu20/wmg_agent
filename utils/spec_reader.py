@@ -6,16 +6,16 @@ import os
 
 CODE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-config_rand = random.Random(time.time())  # For 'truly' random hyperparameter selection.
+spec_rand = random.Random(time.time())  # For 'truly' random hyperparameter selection.
 
-cf = None
+spec = None
 
 '''
-Configuration settings in wmg_agent:
+Runspecs in wmg_agent:
 Designed to minimize the passing of arguments through the commandline or function calls.
-This file creates the ConfigHandler object (cf), which other files read.
-The spec.py file defines every parameter and its allowed settings.
-    This .py extension is only for pretty formatting. The spec.py file is never actually run.
+This file creates the SpecReader object, which other files access.
+The <spec>.py file defines every parameter and its allowed settings.
+    This .py extension is only for pretty formatting. The <spec>.py file is never actually run as Python.
     Each line must follow one of these formats:
         1. Blank
         2. Comment (starting with #)
@@ -34,7 +34,7 @@ class Setting(object):
     def set_value(self, value_str):
         values = value_str.split(',')
         if len(values) > 1:
-            value_str = values[config_rand.randint(0, len(values)-1)].strip()
+            value_str = values[spec_rand.randint(0, len(values)-1)].strip()
         if value_str == 'None':
             new_value = None
         elif value_str == 'True':
@@ -42,7 +42,7 @@ class Setting(object):
         elif value_str == 'False':
             new_value = False
         elif value_str == 'randint':
-            new_value = config_rand.randint(0, 999999999)
+            new_value = spec_rand.randint(0, 999999999)
         else:
             try:
                 new_value = int(value_str)
@@ -59,17 +59,17 @@ class Setting(object):
         return self.value
 
 
-class ConfigHandler(object):
+class SpecReader(object):
     def __init__(self, runspec_path):
-        # Get the default config values.
+        # Get the default spec values.
         full_path = os.path.join(os.path.dirname(CODE_DIR), runspec_path)
         self.settings = {}
         self.lines_or_settings_to_output = []
-        self.read_config_file(open(full_path, 'r'))
-        global cf
-        cf = self
+        self.read_spec_file(open(full_path, 'r'))
+        global spec
+        spec = self
 
-    def read_config_file(self, file):
+    def read_spec_file(self, file):
         line_num = 0
         for line in file:
             line = line[:-1]

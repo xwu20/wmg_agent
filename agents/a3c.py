@@ -5,27 +5,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.config_handler import cf
-AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
-A3C_T_MAX = cf.val("A3C_T_MAX")
-LEARNING_RATE = cf.val("LEARNING_RATE")
-DISCOUNT_FACTOR = cf.val("DISCOUNT_FACTOR")
-GRADIENT_CLIP = cf.val("GRADIENT_CLIP")
-WEIGHT_DECAY = cf.val("WEIGHT_DECAY")
-AGENT_NET = cf.val("AGENT_NET")
-ENTROPY_TERM_STRENGTH = cf.val("ENTROPY_TERM_STRENGTH")
-REWARD_SCALE = cf.val("REWARD_SCALE")
-ADAM_EPS = cf.val("ADAM_EPS")
-ANNEAL_LR = cf.val("ANNEAL_LR")
+from utils.spec_reader import spec
+AGENT_RANDOM_SEED = spec.val("AGENT_RANDOM_SEED")
+A3C_T_MAX = spec.val("A3C_T_MAX")
+LEARNING_RATE = spec.val("LEARNING_RATE")
+DISCOUNT_FACTOR = spec.val("DISCOUNT_FACTOR")
+GRADIENT_CLIP = spec.val("GRADIENT_CLIP")
+WEIGHT_DECAY = spec.val("WEIGHT_DECAY")
+AGENT_NET = spec.val("AGENT_NET")
+ENTROPY_TERM_STRENGTH = spec.val("ENTROPY_TERM_STRENGTH")
+REWARD_SCALE = spec.val("REWARD_SCALE")
+ADAM_EPS = spec.val("ADAM_EPS")
+ANNEAL_LR = spec.val("ANNEAL_LR")
 if ANNEAL_LR:
-    LR_GAMMA = cf.val("LR_GAMMA")
+    LR_GAMMA = spec.val("LR_GAMMA")
     from torch.optim.lr_scheduler import StepLR
 
 torch.manual_seed(AGENT_RANDOM_SEED)
 
 
 class A3cAgent(object):
-    ''' A single-worker version of Asynchronous Actor-Critic '''
+    ''' A single-worker version of Asynchronous Advantage Actor-Critic (Mnih et al., 2016)'''
     def __init__(self, observation_space_size, action_space_size):
         if AGENT_NET == "GRU_Network":
             from agents.networks.gru import GRU_Network
@@ -75,23 +75,12 @@ class A3cAgent(object):
         return self.last_action
 
     def adapt(self, reward, done, next_observation):
-        reward *= REWARD_SCALE
-
-        # print("OBS = {}".format(self.last_observation))
-        # print("ACT = {}".format(self.last_action))
-        # print("REW = {}".format(self.last_reward))
-        # print()
-
-        # print("g = {}".format(self.global_net.actor_linear.weight.grad))
-        # print("w =                                    {}".format(self.global_net.actor_linear.weight))
-
-        # Buffer one frame of data for eventual training.
+        ''' Buffer one frame of data for eventual training. '''
         self.values.append(self.value_tensor)
         self.logps.append(self.logp_tensor)
         self.actions.append(self.action_tensor)
-        self.rewards.append(reward)
+        self.rewards.append(reward * REWARD_SCALE)
         self.num_training_frames_in_buffer += 1
-
         if done:
             self.adapt_on_end_of_episode()
         elif self.num_training_frames_in_buffer == A3C_T_MAX:
@@ -103,18 +92,17 @@ class A3cAgent(object):
         self.train(0.)
 
     def adapt_on_end_of_sequence(self, next_observation):
-        # Peek at the state value of the next observation, for TD calculation.
+        ''' Peek at the state value of the next observation, for TD calculation. '''
         _, next_value, _ = self.network(next_observation, self.net_state)
-
         # Train.
         self.train(next_value.squeeze().data.numpy())
-
         # Stop the gradients from flowing back into this window that we just trained on.
         self.net_state = self.network.detach_from_history(self.net_state)
-
+        # Clear the experiment buffer.
         self.reset_adaptation_state()
 
     def train(self, next_value):
+        ''' Update the weights. '''
         loss = self.loss_function(next_value, torch.cat(self.values), torch.cat(self.logps), torch.cat(self.actions), np.asarray(self.rewards))
         self.optimizer.zero_grad()
         loss.backward()

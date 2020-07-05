@@ -1,5 +1,4 @@
 
-# Runspecs
 Each runspec defines all the settings for a single run.
 To execute a runspec, with **wmg_agent** as the current directory, type:
 
@@ -7,11 +6,11 @@ To execute a runspec, with **wmg_agent** as the current directory, type:
 
 In this study, each runspec's hyperparameters were tuned for that particular combination of agent and environment.
 
-## Pathfinding runspecs
+# Pathfinding runspecs
 
 ![](../images/pathfinding.png)
 
-#### WMG agent
+### WMG agent
 
 [train_wmg_on_pathfinding.py](train_wmg_on_pathfinding.py) 
 trains a new WMG agent on random Pathfinding episodes.
@@ -31,7 +30,7 @@ loads **models/nr_wmg_pathfinding.pth** (one of the 100 nr-WMG agent models trai
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.498, which is 99.6% of possible reward.
 
-#### GRU agent
+### GRU agent
 
 [train_gru_on_pathfinding.py](train_gru_on_pathfinding.py)
 trains a new GRU agent on random Pathfinding episodes.
@@ -41,14 +40,14 @@ loads **models/gru_pathfinding.pth** (one of the 100 GRU agent models trained on
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.474, which is 94.7% of possible reward.
 
-## BabyAI runspecs
+# BabyAI runspecs
 
 ![](../images/babyai.png)
 
 The following BabyAI runspecs use Level 4 (GoToLocal).
 Any of the other 18 BabyAI levels can be selected by modifying the runspec.
 
-#### WMG agent
+### WMG agent
 
 [train_wmg_on_factored_babyai.py](train_wmg_on_factored_babyai.py)
 trains a new WMG agent on random BabyAI episodes with factored images,
@@ -70,7 +69,7 @@ a WMG agent model trained for 1,330,000 environment interactions,
 then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
-#### GRU agent
+### GRU agent
 
 [train_gru_on_factored_babyai.py](train_gru_on_factored_babyai.py)
 trains a new GRU agent on random BabyAI episodes with factored images,
@@ -92,7 +91,7 @@ loads **models/gru_flat_babyai.pth**
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
-## Sokoban runspecs
+# Sokoban runspecs
 
 ![](../images/sokoban.png)
 

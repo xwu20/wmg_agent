@@ -4,14 +4,14 @@ import gym
 import babyai  # This registers the 19 MiniGrid levels.
 import numpy as np
 
-from utils.config_handler import cf
-BABYAI_ENV_LEVEL = cf.val("BABYAI_ENV_LEVEL")
-USE_SUCCESS_RATE = cf.val("USE_SUCCESS_RATE")  # Used by post-processing files.
-SUCCESS_RATE_THRESHOLD = cf.val("SUCCESS_RATE_THRESHOLD")
-HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
-NUM_TEST_EPISODES = cf.val("NUM_TEST_EPISODES")
-BINARY_REWARD = cf.val("BINARY_REWARD")
-OBS_ENCODER = cf.val("OBS_ENCODER")
+from utils.spec_reader import spec
+BABYAI_ENV_LEVEL = spec.val("BABYAI_ENV_LEVEL")
+USE_SUCCESS_RATE = spec.val("USE_SUCCESS_RATE")  # Used by post-processing files.
+SUCCESS_RATE_THRESHOLD = spec.val("SUCCESS_RATE_THRESHOLD")
+HELDOUT_TESTING = spec.val("HELDOUT_TESTING")
+NUM_TEST_EPISODES = spec.val("NUM_TEST_EPISODES")
+BINARY_REWARD = spec.val("BINARY_REWARD")
+OBS_ENCODER = spec.val("OBS_ENCODER")
 
 assert USE_SUCCESS_RATE
 

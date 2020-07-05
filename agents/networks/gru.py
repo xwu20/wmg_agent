@@ -5,10 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from agents.networks.shared.general import LinearLayer, SeparateActorCriticLayers
 
-from utils.config_handler import cf
-NUM_RNN_UNITS = cf.val("NUM_RNN_UNITS")
-AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
-OBS_EMBED_SIZE = cf.val("OBS_EMBED_SIZE")
+from utils.spec_reader import spec
+NUM_RNN_UNITS = spec.val("NUM_RNN_UNITS")
+AC_HIDDEN_LAYER_SIZE = spec.val("AC_HIDDEN_LAYER_SIZE")
+OBS_EMBED_SIZE = spec.val("OBS_EMBED_SIZE")
 
 
 class GRU_Network(nn.Module):

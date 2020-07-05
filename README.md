@@ -1,16 +1,16 @@
 
 # Working Memory Graphs
-This is the official repository accompanying 
+This repository accompanies 
 the ICML 2020 paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
 by Ricky Loynd, Roland Fernandez, Asli Celikyilmaz, Adith Swaminathan and Matthew Hausknecht.
 
-WMG is a Transformer-based RL agent that reasons over 
+WMG is a Transformer-based RL agent that attends to
 a dynamic set of vectors representing observed and recurrent state.
 
 ![](images/overview.png)
 
 ## Installation steps
-* The code has been tested with Python 3.6, on both Windows and Linux.
+(The code has been tested with Python 3.6, on both Windows and Linux.)
 * Clone this repository.
 * Create a new virtual environment.
 * Activate the virtual environment.
@@ -25,7 +25,7 @@ a dynamic set of vectors representing observed and recurrent state.
 	* pip install --user --editable .
 
 
-# Run commands
+# Running experiments
 
 Execute all run commands from the **wmg_agent** directory, using this format:
 

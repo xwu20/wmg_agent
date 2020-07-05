@@ -10,15 +10,15 @@ from agents.networks.shared.general import SeparateActorCriticLayers
 from agents.networks.shared.general import SharedActorCriticLayers
 from utils.graph import Graph
 
-from utils.config_handler import cf
-V2 = cf.val("V2")
-WMG_ATTENTION_HEAD_SIZE = cf.val("WMG_ATTENTION_HEAD_SIZE")
-WMG_NUM_ATTENTION_HEADS = cf.val("WMG_NUM_ATTENTION_HEADS")
-WMG_NUM_LAYERS = cf.val("WMG_NUM_LAYERS")
-WMG_HIDDEN_SIZE = cf.val("WMG_HIDDEN_SIZE")
-AC_HIDDEN_LAYER_SIZE = cf.val("AC_HIDDEN_LAYER_SIZE")
-WMG_MAX_OBS = cf.val("WMG_MAX_OBS")
-WMG_MAX_MEMOS = cf.val("WMG_MAX_MEMOS")
+from utils.spec_reader import spec
+V2 = spec.val("V2")
+WMG_ATTENTION_HEAD_SIZE = spec.val("WMG_ATTENTION_HEAD_SIZE")
+WMG_NUM_ATTENTION_HEADS = spec.val("WMG_NUM_ATTENTION_HEADS")
+WMG_NUM_LAYERS = spec.val("WMG_NUM_LAYERS")
+WMG_HIDDEN_SIZE = spec.val("WMG_HIDDEN_SIZE")
+AC_HIDDEN_LAYER_SIZE = spec.val("AC_HIDDEN_LAYER_SIZE")
+WMG_MAX_OBS = spec.val("WMG_MAX_OBS")
+WMG_MAX_MEMOS = spec.val("WMG_MAX_MEMOS")
 
 # Set WMG_MAX_MEMOS > 0 for attention over Memos, stored in a StateMatrix.
 # Set WMG_MAX_OBS > 0 for attention over past observations, stored in a StateMatrix.
@@ -27,7 +27,7 @@ WMG_MAX_MEMOS = cf.val("WMG_MAX_MEMOS")
 if WMG_MAX_MEMOS:
     # StateMatrix contains Memos.
     S = WMG_MAX_MEMOS  # Maximum number of state vectors stored in the matrix.
-    WMG_MEMO_SIZE = cf.val("WMG_MEMO_SIZE")
+    WMG_MEMO_SIZE = spec.val("WMG_MEMO_SIZE")
     assert WMG_MAX_OBS == 0
 elif WMG_MAX_OBS:
     # StateMatrix contains past observations.
@@ -179,7 +179,7 @@ class WMG_Network(nn.Module):
 
 
 class StateMatrix(object):
-    ''' Used to store either Factors (from past observations) or Memos. '''
+    ''' Used to store either Memos, or past observations (as factors). '''
     def __init__(self, max_vectors, vector_len):
         self.vector_len = vector_len
         self.max_vectors = max_vectors

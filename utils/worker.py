@@ -8,18 +8,18 @@ import platform
 import torch
 import numpy as np
 
-from utils.config_handler import cf
-TYPE_OF_RUN = cf.val("TYPE_OF_RUN")
-ENV = cf.val("ENV")
-LOAD_MODEL_FROM = cf.val("LOAD_MODEL_FROM")
-SAVE_MODELS_TO = cf.val("SAVE_MODELS_TO")
-ENV_RANDOM_SEED = cf.val("ENV_RANDOM_SEED")
-AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
-REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
-TOTAL_STEPS = cf.val("TOTAL_STEPS")
-ANNEAL_LR = cf.val("ANNEAL_LR")
+from utils.spec_reader import spec
+TYPE_OF_RUN = spec.val("TYPE_OF_RUN")
+ENV = spec.val("ENV")
+LOAD_MODEL_FROM = spec.val("LOAD_MODEL_FROM")
+SAVE_MODELS_TO = spec.val("SAVE_MODELS_TO")
+ENV_RANDOM_SEED = spec.val("ENV_RANDOM_SEED")
+AGENT_RANDOM_SEED = spec.val("AGENT_RANDOM_SEED")
+REPORTING_INTERVAL = spec.val("REPORTING_INTERVAL")
+TOTAL_STEPS = spec.val("TOTAL_STEPS")
+ANNEAL_LR = spec.val("ANNEAL_LR")
 if ANNEAL_LR:
-    ANNEALING_START = cf.val("ANNEALING_START")
+    ANNEALING_START = spec.val("ANNEALING_START")
 
 from agents.a3c import A3cAgent
 
@@ -61,7 +61,7 @@ class Worker(object):
             print('Run type "{}" not recognized.'.format(TYPE_OF_RUN))
 
     def create_results_output_file(self):
-        # Output is always written to a results directory (sibling of the code directory).
+        # Output files are written to the results directory.
         server_name = '{}'.format(platform.uname()[1])
         datetime_string = pytz.utc.localize(
             datetime.datetime.utcnow()).astimezone(pytz.timezone("PST8PDT")).strftime("%y-%m-%d_%H-%M-%S")
@@ -79,7 +79,7 @@ class Worker(object):
         elif ENV == "BabyAI_Env":
             from environments.babyai import BabyAI_Env
             environment = BabyAI_Env(seed)
-            HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
+            HELDOUT_TESTING = spec.val("HELDOUT_TESTING")
             self.heldout_testing = HELDOUT_TESTING
         elif ENV == "Sokoban_Env":
             from environments.sokoban import Sokoban_Env
@@ -101,14 +101,14 @@ class Worker(object):
     def train(self):
         self.create_results_output_file()
         self.init_episode()
-        cf.output_to_file(self.output_filename)
+        spec.output_to_file(self.output_filename)
         self.take_n_steps(TOTAL_STEPS, None, True)
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
 
     def test(self):
         self.create_results_output_file()
         self.init_episode()
-        cf.output_to_file(self.output_filename)
+        spec.output_to_file(self.output_filename)
         self.take_n_steps(TOTAL_STEPS, None, False)
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
 
@@ -116,8 +116,8 @@ class Worker(object):
         # Test the model on all episodes.
         # Success is determined by positive reward on the final step,
         # which works for BabyAI and Sokoban, but is not appropriate for many environments.
-        NUM_EPISODES_TO_TEST = cf.val("NUM_EPISODES_TO_TEST")
-        MIN_FINAL_REWARD_FOR_SUCCESS = cf.val("MIN_FINAL_REWARD_FOR_SUCCESS")
+        NUM_EPISODES_TO_TEST = spec.val("NUM_EPISODES_TO_TEST")
+        MIN_FINAL_REWARD_FOR_SUCCESS = spec.val("MIN_FINAL_REWARD_FOR_SUCCESS")
         num_wins = 0
         num_episodes_tested = 0
         print("Testing {} episodes.".format(NUM_EPISODES_TO_TEST))
