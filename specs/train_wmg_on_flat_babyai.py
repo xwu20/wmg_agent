@@ -10,10 +10,10 @@ SAVE_MODELS_TO = models/new_wmg_flat_babyai.pth
 
 # worker.py
 ENV = BabyAI_Env
-ENV_RANDOM_SEED = 2  # Use randint for non-deterministic behavior.
+ENV_RANDOM_SEED = randint  # Use an integer for deterministic training.
 AGENT_RANDOM_SEED = 1
-REPORTING_INTERVAL = 20  # 10000 20
-TOTAL_STEPS = 100  # 1600000 100
+REPORTING_INTERVAL = 10000
+TOTAL_STEPS = 1600000
 ANNEAL_LR = False
 
 # A3cAgent
@@ -33,15 +33,13 @@ BINARY_REWARD = True
 
 ###  HYPERPARAMETERS  (tunable)  ###
 
-# Agents in general
+# A3cAgent
 A3C_T_MAX = 6
 LEARNING_RATE = 2.5e-05
 DISCOUNT_FACTOR = 0.5
 GRADIENT_CLIP = 256.0
 ENTROPY_TERM_STRENGTH = 0.02
 ADAM_EPS = 1e-8
-
-# A3cAgent
 REWARD_SCALE = 16.0
 WEIGHT_DECAY = 0.
 

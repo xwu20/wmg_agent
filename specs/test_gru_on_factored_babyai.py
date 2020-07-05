@@ -5,7 +5,7 @@
 
 # general
 TYPE_OF_RUN = test_episodes  # train, test, test_episodes, render
-NUM_EPISODES_TO_TEST = 100  # 1000 100
+NUM_EPISODES_TO_TEST = 1000
 MIN_FINAL_REWARD_FOR_SUCCESS = 1.0
 LOAD_MODEL_FROM = models/gru_factored_babyai.pth
 SAVE_MODELS_TO = None
@@ -32,15 +32,13 @@ BINARY_REWARD = True
 
 ###  HYPERPARAMETERS  (tunable)  ###
 
-# Agents in general
+# A3cAgent
 A3C_T_MAX = 3
 LEARNING_RATE = 4e-05
 DISCOUNT_FACTOR = 0.95
 GRADIENT_CLIP = 256.0
 ENTROPY_TERM_STRENGTH = 0.1
 ADAM_EPS = 1e-06
-
-# A3cAgent
 REWARD_SCALE = 8.0
 WEIGHT_DECAY = 0.
 

@@ -1,3 +1,4 @@
+# Executing runspecs
 
 Each runspec defines all the settings for a single run.
 To execute a runspec, with **wmg_agent** as the current directory, type:
@@ -20,7 +21,7 @@ loads **models/wmg_pathfinding.pth** (one of the 100 WMG agent models trained on
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.498, which is 99.6% of possible reward.
 
-#### Non-recurrent WMG agent given full history
+### Non-recurrent WMG agent given full history
 
 [train_nr_wmg_on_pathfinding.py](train_nr_wmg_on_pathfinding.py)
 trains a new nr-WMG agent on random Pathfinding episodes.

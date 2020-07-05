@@ -31,8 +31,8 @@ Execute all run commands from the **wmg_agent** directory, using this format:
 
     python run.py <runspec>
 
-Use the runspecs in the [spec](specs) directory to reproduce results from the paper,
-and as examples to create new runspecs for new experiments.
+Execute the runspecs in the [specs](specs) directory to reproduce results from the paper.
+They can also be used as examples for new experiments.
 
 # Citations
 

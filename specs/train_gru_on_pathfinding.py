@@ -10,10 +10,10 @@ SAVE_MODELS_TO = models/new_gru_pathfinding.pth
 
 # worker.py
 ENV = Pathfinding_Env
-ENV_RANDOM_SEED = 1  # Use randint for non-deterministic behavior.
+ENV_RANDOM_SEED = randint  # Use an integer for deterministic training.
 AGENT_RANDOM_SEED = 1
-REPORTING_INTERVAL = 120  # 100000 120
-TOTAL_STEPS = 600  # 20000000 600
+REPORTING_INTERVAL = 100000
+TOTAL_STEPS = 20000000
 ANNEAL_LR = False
 
 # A3cAgent
@@ -28,15 +28,13 @@ HELDOUT_TESTING = False
 
 ###  HYPERPARAMETERS  (tunable)  ###
 
-# Agents in general
+# A3cAgent
 A3C_T_MAX = 16
 LEARNING_RATE = 0.0001
 DISCOUNT_FACTOR = 0.5
 GRADIENT_CLIP = 4.0
 ENTROPY_TERM_STRENGTH = 0.02
 ADAM_EPS = 1e-08
-
-# A3cAgent
 REWARD_SCALE = 0.5
 WEIGHT_DECAY = 0.
 
