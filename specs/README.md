@@ -1,13 +1,15 @@
 
 # Runspecs
-A runspec defines all the settings for a single run.
-To execute one of the following runspecs, with **wmg_agent** as the current directory, type:
+Each runspec defines all the settings for a single run.
+To execute a runspec, with **wmg_agent** as the current directory, type:
 
     python run.py specs/<runspec>
 
-Each runspec's hyperparameters were tuned for that particular combination of agent and environment.
+In this study, each runspec's hyperparameters were tuned for that particular combination of agent and environment.
 
 ## Pathfinding runspecs
+
+![](../images/pathfinding.png)
 
 #### WMG agent
 
@@ -39,8 +41,9 @@ loads **models/gru_pathfinding.pth** (one of the 100 GRU agent models trained on
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.474, which is 94.7% of possible reward.
 
-
 ## BabyAI runspecs
+
+![](../images/babyai.png)
 
 The following BabyAI runspecs use Level 4 (GoToLocal).
 Any of the other 18 BabyAI levels can be selected by modifying the runspec.
@@ -58,7 +61,7 @@ then tests the agent on 1,000 random episodes.
 The success rate should be about 99%.
 
 [train_wmg_on_flat_babyai.py](train_wmg_on_flat_babyai.py)
-trains a new WMG agent on random BabyAI episodes with flat images,
+trains a new WMG agent on random BabyAI episodes with flattened native images,
 until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_wmg_on_flat_babyai.py](test_wmg_on_flat_babyai.py)
@@ -80,7 +83,7 @@ then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
 [train_gru_on_flat_babyai.py](train_gru_on_flat_babyai.py)
-trains a new GRU agent on random BabyAI episodes with flat images,
+trains a new GRU agent on random BabyAI episodes with flattened native images,
 until it reaches a success rate of 99% on 10,000 random episodes.
 
 [test_gru_on_flat_babyai.py](test_gru_on_flat_babyai.py)
@@ -89,8 +92,9 @@ loads **models/gru_flat_babyai.pth**
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
-
 ## Sokoban runspecs
+
+![](../images/Sokoban.png)
 
 [train_wmg_on_sokoban.py](train_wmg_on_sokoban.py)
 trains a new WMG agent on Sokoban puzzles drawn randomly 

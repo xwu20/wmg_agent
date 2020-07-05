@@ -1,20 +1,24 @@
 
 # Working Memory Graphs
-This repository is provided to assist in reproducing results from 
-the paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
-published at ICML 2020.
+This is the official repository accompanying 
+the ICML 2020 paper [Working Memory Graphs](https://arxiv.org/abs/1911.07141)
+by Ricky Loynd, Roland Fernandez, Asli Celikyilmaz, Adith Swaminathan and Matthew Hausknecht.
 
+WMG is a Transformer-based RL agent that reasons over 
+a dynamic set of vectors representing observed and recurrent state.
+
+![](images/overview.png)
 
 ## Installation steps
 * The code has been tested with Python 3.6, on both Windows and Linux.
 * Clone this repository.
 * Create a new virtual environment.
-* Activate the environment.
+* Activate the virtual environment.
 * Install PyTorch 1.3.1.
 * Install other dependencies:
 	* cd wmg_agent
     * pip install -r requirements.txt
-* Install BabyAI:
+* Install BabyAI (from any directory):
 	* conda install -c conda-forge python-blosc
 	* git clone -b iclr19 https://github.com/mila-iqia/babyai.git
 	* cd babyai
@@ -27,8 +31,8 @@ Execute all run commands from the **wmg_agent** directory, using this format:
 
     python run.py <runspec>
 
-Use the runspecs in the [spec](specs) directory to reproduce results from the paper.
-Create new runspecs for new experiments.
+Use the runspecs in the [spec](specs) directory to reproduce results from the paper,
+and as examples to create new runspecs for new experiments.
 
 # Citations
 
