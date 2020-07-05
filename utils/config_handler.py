@@ -12,10 +12,10 @@ cf = None
 
 '''
 Configuration settings in wmg_agent:
-Designed to minimize the passing of arguments through the commandline and down function call trees.
-This file creates the global ConfigHandler object (cf), which other files read.
-The config.py file defines every parameter and its allowed settings.
-    This .py extension is only for pretty formatting. The config.py file is never actually run.
+Designed to minimize the passing of arguments through the commandline or function calls.
+This file creates the ConfigHandler object (cf), which other files read.
+The spec.py file defines every parameter and its allowed settings.
+    This .py extension is only for pretty formatting. The spec.py file is never actually run.
     Each line must follow one of these formats:
         1. Blank
         2. Comment (starting with #)
@@ -108,6 +108,3 @@ class ConfigHandler(object):
                     file.write(sz + '\n')
         file.write('\n')
         file.close()
-
-    def safe_environ_var(self, key):
-        return os.environ[key] if key in os.environ else None

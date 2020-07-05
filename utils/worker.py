@@ -1,26 +1,25 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 import os
-import random
 import time
 import datetime
 import pytz
 import platform
-import numpy as np
 import torch
+import numpy as np
 
 from utils.config_handler import cf
 TYPE_OF_RUN = cf.val("TYPE_OF_RUN")
+ENV = cf.val("ENV")
 LOAD_MODEL_FROM = cf.val("LOAD_MODEL_FROM")
 SAVE_MODELS_TO = cf.val("SAVE_MODELS_TO")
 ENV_RANDOM_SEED = cf.val("ENV_RANDOM_SEED")
+AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 REPORTING_INTERVAL = cf.val("REPORTING_INTERVAL")
 TOTAL_STEPS = cf.val("TOTAL_STEPS")
-ENV = cf.val("ENV")
 ANNEAL_LR = cf.val("ANNEAL_LR")
 if ANNEAL_LR:
     ANNEALING_START = cf.val("ANNEALING_START")
-AGENT_RANDOM_SEED = cf.val("AGENT_RANDOM_SEED")
 
 from agents.a3c import A3cAgent
 
@@ -31,10 +30,10 @@ class Worker(object):
         self.start_time = time.time()
         self.heldout_testing = False
         self.environment = self.create_environment(ENV_RANDOM_SEED)
-        self.agent = A3cAgent(self.observation_space_size, self.action_space_size)
+        self.agent = A3cAgent(self.observation_space, self.action_space)
         if self.heldout_testing:
             self.environment.test_environment = self.create_environment(ENV_RANDOM_SEED + 1000000)
-            self.environment.test_agent = A3cAgent(self.observation_space_size, self.action_space_size)
+            self.environment.test_agent = A3cAgent(self.observation_space, self.action_space)
             self.environment.test_agent.network = self.agent.network
         self.step_num = 0
         self.total_reward = 0.
@@ -43,9 +42,8 @@ class Worker(object):
         self.action = None
         self.reward = 0.
         self.done = False
-        self.best_metric_value = -1000000000.
+        self.best_metric_value = np.NINF
         self.t = None
-        self.save_trajs = None
         self.output_filename = None
         if LOAD_MODEL_FROM is not None:
             self.agent.load_model(LOAD_MODEL_FROM)
@@ -89,8 +87,8 @@ class Worker(object):
         else:
             print("Environment {} not found.".format(ENV))
             exit(0)
-        self.observation_space_size = environment.observation_space_size
-        self.action_space_size = environment.action_space_size
+        self.observation_space = environment.observation_space
+        self.action_space = environment.action_space
         return environment
 
     def output(self, sz):
@@ -104,14 +102,14 @@ class Worker(object):
         self.create_results_output_file()
         self.init_episode()
         cf.output_to_file(self.output_filename)
-        self.take_n_steps(1000000000, None, True)
+        self.take_n_steps(TOTAL_STEPS, None, True)
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
 
     def test(self):
         self.create_results_output_file()
         self.init_episode()
         cf.output_to_file(self.output_filename)
-        self.take_n_steps(1000000000, None, False)
+        self.take_n_steps(TOTAL_STEPS, None, False)
         self.output("{:8.6f} overall reward per step".format(self.total_reward / self.step_num))
 
     def test_episodes(self):
@@ -208,36 +206,21 @@ class Worker(object):
     def on_escape_key(self):
         exit(0)
 
-    def take_n_steps(self, max_steps, manual_action_override, train_agent, return_on_done = False):
+    def take_n_steps(self, max_steps, manual_action_override, train_agent):
         if manual_action_override == -1:
             return
         self.action = None
         for i in range(max_steps):
-            if self.step_num == TOTAL_STEPS:
-                print("Completed {} steps".format(TOTAL_STEPS))
-                return
-
             # Get an action.
             if manual_action_override is None:
                 self.action = self.agent.step(self.observation)
             else:
                 self.action = manual_action_override
 
-            # Apply the action to the environment, which may say the episode is done.
+            # Apply the action to the environment.
             self.observation, self.reward, self.done = self.environment.step(self.action)
 
-            if return_on_done and self.done:
-                return self.reward, self.step_num
-
-            # Save trajectories, if necessary.
-            if self.save_trajs is not None:
-                if self.action is not None:
-                    action_vec = np.zeros(self.action_space_size)
-                    action_vec[self.action] = 1.
-                    self.output_trajectory_file.write("{}, {}, {}, {}\n".format(self.next_obs, action_vec, self.reward, 1 * self.done))
-                    self.next_obs = np.copy(self.observation)
-
-            # Let the agent adapt to the effects of the action before a new episode can be initialized.
+            # Let the agent adapt to the effects of the action.
             if (manual_action_override is None) and train_agent:
                 self.agent.adapt(self.reward, self.done, self.observation)
 
@@ -253,7 +236,6 @@ class Worker(object):
     def init_episode(self, episode_id = None):
         self.agent.reset_state()
         self.observation = self.environment.reset(repeat=False, episode_id=episode_id)
-        self.obs_orig = self.observation
         self.draw()
 
     def draw(self):

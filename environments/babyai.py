@@ -11,10 +11,7 @@ SUCCESS_RATE_THRESHOLD = cf.val("SUCCESS_RATE_THRESHOLD")
 HELDOUT_TESTING = cf.val("HELDOUT_TESTING")
 NUM_TEST_EPISODES = cf.val("NUM_TEST_EPISODES")
 BINARY_REWARD = cf.val("BINARY_REWARD")
-OBS_FEEDBACK = cf.val("OBS_FEEDBACK")
 OBS_ENCODER = cf.val("OBS_ENCODER")
-
-assert not OBS_FEEDBACK
 
 assert USE_SUCCESS_RATE
 
@@ -54,6 +51,7 @@ def encode_1_hot(i, size, vector, id):  # integer => 1-hot vector
     id += size
     return id
 
+
 def decode_1_hot(size, vector, id):  # 1-hot vector => integer
     idx = None
     for i in range(size):
@@ -62,6 +60,7 @@ def decode_1_hot(size, vector, id):  # 1-hot vector => integer
             break
     id += size
     return idx, id
+
 
 def print_obs(obs):
     # sz = "pointed "
@@ -91,6 +90,7 @@ def print_obs(obs):
         #     sz += "{}  ".format(image[col][row][2])
         print(sz)
     print()
+
 
 class ClauseEncoder(object):
     def __init__(self):
@@ -281,7 +281,6 @@ class ClauseEncoder(object):
                 self.word_list.append(word)
 
 
-
 class BabyAI_Env(object):
     def __init__(self, seed=None):
         if not seed:
@@ -299,27 +298,27 @@ class BabyAI_Env(object):
         self.num_object_types = self.encoder.num_objtypes
         self.num_colors = self.encoder.num_colors
         self.num_door_states = 3
-        self.action_space_size = 7
+        self.action_space = 7
         self.max_num_factor_nodes = 12
         if OBS_ENCODER == 'Flat':
-            self.observation_space_size = self.action_space_size + self.num_orientations  # Last action, and current direction.
-            self.observation_space_size += self.retina_width * self.retina_width * (self.num_cell_types + self.num_colors + self.num_door_states)  # Image.
-            self.observation_space_size += self.encoder.double_object_vector_length
+            self.observation_space = self.action_space + self.num_orientations  # Last action, and current direction.
+            self.observation_space += self.retina_width * self.retina_width * (self.num_cell_types + self.num_colors + self.num_door_states)  # Image.
+            self.observation_space += self.encoder.double_object_vector_length
         elif OBS_ENCODER == 'CnnFlat':
-            self.observation_space_size = self.action_space_size + self.num_orientations  # Last action, and current direction.
-            self.observation_space_size += self.encoder.double_object_vector_length
+            self.observation_space = self.action_space + self.num_orientations  # Last action, and current direction.
+            self.observation_space += self.encoder.double_object_vector_length
         elif OBS_ENCODER == 'Factored':
-            self.observation_global_vector_size = self.action_space_size + self.num_orientations + 2 * (1 + self.retina_width)
+            self.observation_global_vector_size = self.action_space + self.num_orientations + 2 * (1 + self.retina_width)
             self.observation_global_vector_size += self.encoder.double_object_vector_length
             self.observation_factor_vector_size = self.num_object_types + self.num_colors + 2 * (1 + self.retina_width)
             self.observation_factor_vector_size += self.num_door_states
-            self.observation_space_size = (self.observation_global_vector_size, self.observation_factor_vector_size)
+            self.observation_space = (self.observation_global_vector_size, self.observation_factor_vector_size)
         elif OBS_ENCODER == 'FactoredThenFlattened':
-            self.observation_global_vector_size = self.action_space_size + self.num_orientations + 2 * (1 + self.retina_width)
+            self.observation_global_vector_size = self.action_space + self.num_orientations + 2 * (1 + self.retina_width)
             self.observation_global_vector_size += self.encoder.double_object_vector_length
             self.observation_factor_vector_size = self.num_object_types + self.num_colors + 2 * (1 + self.retina_width)
             self.observation_factor_vector_size += self.num_door_states
-            self.observation_space_size = self.observation_global_vector_size + self.max_num_factor_nodes * self.observation_factor_vector_size
+            self.observation_space = self.observation_global_vector_size + self.max_num_factor_nodes * self.observation_factor_vector_size
 
         self.reset_online_test_sums()
         self.reward = 0.
@@ -350,12 +349,12 @@ class BabyAI_Env(object):
             return self.flatten(self.encode_factored(obs, last_action))
 
     def flatten(self, obs_list):
-        self.observation = np.zeros(self.observation_space_size)
+        self.observation = np.zeros(self.observation_space)
         id = 0
         for vec in obs_list:
             self.observation[id:id+len(vec)] = vec[:]
             id += len(vec)
-        assert id <= self.observation_space_size
+        assert id <= self.observation_space
         return self.observation
 
     def mission_object_and_color_indices(self, obs):
@@ -380,7 +379,7 @@ class BabyAI_Env(object):
         # Encode the last action.
         if last_action != None:
             global_vector[id + last_action] = 1.
-        id += self.action_space_size
+        id += self.action_space
 
         # Encode the current orientation.
         orientation = obs['direction']
@@ -472,13 +471,13 @@ class BabyAI_Env(object):
         return id
 
     def encode_flat(self, obs, last_action):
-        self.observation = np.zeros(self.observation_space_size)
+        self.observation = np.zeros(self.observation_space)
         id = 0
 
         # Encode the last action.
         if last_action != None:
             self.observation[id + last_action] = 1.
-        id += self.action_space_size
+        id += self.action_space
 
         # Encode the agent's current direction.
         orientation = obs['direction']
@@ -513,17 +512,17 @@ class BabyAI_Env(object):
             self.observation[id + i] = inst_vec[i]  # There must be a more pythonic way.
         id += self.encoder.double_object_vector_length
 
-        assert (id == self.observation_space_size)
+        assert (id == self.observation_space)
         return self.observation
 
     def encode_cnn_flat(self, obs, last_action):
-        self.observation = np.zeros(self.observation_space_size)
+        self.observation = np.zeros(self.observation_space)
         id = 0
 
         # Encode the last action.
         if last_action != None:
             self.observation[id + last_action] = 1.
-        id += self.action_space_size
+        id += self.action_space
 
         # Encode the agent's current direction.
         orientation = obs['direction']
@@ -537,7 +536,7 @@ class BabyAI_Env(object):
             self.observation[id + i] = inst_vec[i]  # There must be a more pythonic way.
         id += self.encoder.double_object_vector_length
 
-        assert (id == self.observation_space_size)
+        assert (id == self.observation_space)
         return [self.observation, obs['image']]
 
     def reset(self, repeat=False, episode_id = None):
@@ -599,7 +598,7 @@ class BabyAI_Env(object):
             if reward > 0.:
                 success = 1.
             self.num_successful_episodes += success
-            # For RSR
+            # For success rate
             self.success_sum += success
             if len(self.success_buf) == self.rsr_win_len:
                 self.success_sum -= self.success_buf[self.success_buf_id]
@@ -608,7 +607,6 @@ class BabyAI_Env(object):
                 self.success_buf.append(success)
             self.success_buf_id = (self.success_buf_id + 1) % self.rsr_win_len
             self.running_success_rate = self.success_sum / len(self.success_buf)
-
 
     def report_online_test_metric(self):
         if HELDOUT_TESTING:
@@ -661,8 +659,8 @@ class BabyAI_Env(object):
 
         # Assemble the tuple to be returned.
         metrics = []
-        metrics.append((sr, "{:6.4f}".format(sr), "RSR"))
-        metrics.append((se, "{:2.0f}".format(se), "SE"))
+        metrics.append((sr, "{:6.4f}".format(sr), "Success rate"))
+        metrics.append((se, "{:2.0f}".format(se), "Projected sample efficiency"))
         ret = (self.step_sum, self.num_episodes, sr, metrics, sr >= SUCCESS_RATE_THRESHOLD)
 
         # Reset the global sums.
@@ -709,8 +707,8 @@ class BabyAI_Env(object):
         metrics = []
         metrics.append((reward_per_step, "{:7.5f}".format(reward_per_step), "reward"))
         metrics.append((success_rate, "{:6.4f}".format(success_rate), "SR"))
-        metrics.append((running_success_rate, "{:6.4f}".format(running_success_rate), "RSR"))
-        metrics.append((self.sample_efficiency, "{:2.0f}".format(self.sample_efficiency), "SE"))
+        metrics.append((running_success_rate, "{:6.4f}".format(running_success_rate), "Success rate"))
+        metrics.append((self.sample_efficiency, "{:2.0f}".format(self.sample_efficiency), "Projected sample efficiency"))
         # metrics.append((running_success_rate, "{:6.4f}".format(running_success_rate), "metric 1 current Success rate"))
         # metrics.append((self.sample_efficiency, "{:2.0f}".format(self.sample_efficiency), "metric 1 final Sample efficiency"))
         ret = (self.step_sum, self.num_episodes, reward_per_step, metrics, False)

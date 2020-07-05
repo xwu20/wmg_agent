@@ -38,7 +38,6 @@ BOX_ON_FLOOR = 4
 AGENT_ON_FLOOR = 5
 AGENT_ON_TARGET = 6
 
-
 CHANGE_COORDINATES = {
     0: (-1, 0), # 0: Move up
     1: (1, 0),  # 1: Move down
@@ -47,6 +46,7 @@ CHANGE_COORDINATES = {
 }
 
 ACTION_NAMES = ['Ponder', 'Up', 'Down', 'Left', 'Right']
+
 
 class Sokoban_Env(object):
     def __init__(self, seed):
@@ -63,9 +63,9 @@ class Sokoban_Env(object):
         self.reward_last = 0
 
         # Other Settings
-        self.action_space_size = 5
+        self.action_space = 5
         if SOKOBAN_OBSERVATION_FORMAT == 'grid':
-            self.observation_space_size = 400
+            self.observation_space = 400
             self.observation = np.zeros((10,10,4), dtype=np.uint8)
         elif SOKOBAN_OBSERVATION_FORMAT == 'factored':
             self.observation = Graph()
@@ -75,11 +75,11 @@ class Sokoban_Env(object):
             self.cell_factor_size += 2 * (self.num_factor_positions + 1) # Cell position.
             self.cell_factor_size += 3 # Cell identity.
             self.cell_factor_size += 4
-            self.core_obs_size = self.action_space_size + 1
+            self.core_obs_size = self.action_space + 1
             self.core_obs_size += 1 + 4  # On target, four walls.
             self.observation.entity_type_sizes.append(self.core_obs_size)
             self.observation.entity_type_sizes.append(self.cell_factor_size)
-            self.observation_space_size = self.observation
+            self.observation_space = self.observation
         self.use_display = False
         self.num_cols_or_rows = PUZZLE_SIZE
         self.pix_per_cell = PUZZLE_SCALE
@@ -165,7 +165,7 @@ class Sokoban_Env(object):
         core_entity.data = np.zeros(self.core_obs_size, np.float32)
         i = 0
         core_entity.data[i + action] = 1.
-        i += self.action_space_size
+        i += self.action_space
         core_entity.data[i] = reward
         i += 1
         if self.cell_state(self.agent_row, self.agent_col) == AGENT_ON_TARGET:

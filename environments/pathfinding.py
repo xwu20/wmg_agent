@@ -8,6 +8,7 @@ NUM_PATTERNS = cf.val("NUM_PATTERNS")
 
 PATTERN_LENGTH = 7
 
+
 class Link(object):
     def __init__(self, graph, src, tar):
         self.graph = graph
@@ -112,9 +113,9 @@ class Pathfinding_Env(object):
         self.reward = 0
         self.done = False
         self.correct_output = 0  # This initial value doesn't matter.
-        self.action_space_size = 2
-        self.observation_space_size = 2 * PATTERN_LENGTH + 1
-        self.observation = np.zeros(self.observation_space_size)
+        self.action_space = 2
+        self.observation_space = 2 * PATTERN_LENGTH + 1
+        self.observation = np.zeros(self.observation_space)
 
         #self.test_graphs()
         self.graph = Graph(self.rand)
