@@ -96,6 +96,8 @@ The success rate should be about 99%.
 
 ![](../images/sokoban.png)
 
+![](../images/sokoban.gif)
+
 [train_wmg_on_sokoban.py](train_wmg_on_sokoban.py)
 trains a new WMG agent on Sokoban puzzles drawn randomly 
 from the [train set](../data/boxoban-levels-master/unfiltered/train), which contains 10k puzzles.
