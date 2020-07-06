@@ -10,19 +10,19 @@ a dynamic set of vectors representing observed and recurrent state.
 ![](images/overview.png)
 
 ## Installation steps
-(The code has been tested with Python 3.6, on both Windows and Linux.)
-* Clone this repository.
+(The code has been tested with Python 3.6, on Windows and Linux.)
 * Create a new virtual environment.
 * Activate the virtual environment.
 * Install PyTorch 1.3.1.
-* Install other dependencies:
-	* cd wmg_agent
-    * pip install -r requirements.txt
 * Install BabyAI (from any directory):
 	* conda install -c conda-forge python-blosc
 	* git clone -b iclr19 https://github.com/mila-iqia/babyai.git
 	* cd babyai
 	* pip install --user --editable .
+	* cd ..
+* Clone the wmg_agent repository.
+* cd wmg_agent
+* pip install -r requirements.txt
 
 
 # Running experiments
