@@ -256,7 +256,7 @@ class Pathfinding_Env(object):
         #ret = (self.step_sum, self.num_episodes, self.reward_percentage, "{:7.3f}".format(self.reward_percentage), "reward percentage", False)
 
         metrics = []
-        metrics.append((self.reward_percentage, "{:7.3f}".format(self.reward_percentage), "reward"))
+        metrics.append((self.reward_percentage, "{:7.3f}".format(self.reward_percentage), "% reward"))
         ret = (self.step_sum, self.num_episodes, self.reward_percentage, metrics, False)
 
         # Reset the global sums.

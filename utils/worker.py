@@ -118,9 +118,11 @@ class Worker(object):
         # which works for BabyAI and Sokoban, but is not appropriate for many environments.
         NUM_EPISODES_TO_TEST = spec.val("NUM_EPISODES_TO_TEST")
         MIN_FINAL_REWARD_FOR_SUCCESS = spec.val("MIN_FINAL_REWARD_FOR_SUCCESS")
+        self.create_results_output_file()
+        spec.output_to_file(self.output_filename)
         num_wins = 0
         num_episodes_tested = 0
-        print("Testing {} episodes.".format(NUM_EPISODES_TO_TEST))
+        self.output("Testing on {} episodes.".format(NUM_EPISODES_TO_TEST))
         start_time = time.time()
         for episode_id in range(NUM_EPISODES_TO_TEST):
             torch.manual_seed(AGENT_RANDOM_SEED)
@@ -129,9 +131,9 @@ class Worker(object):
                 num_wins += 1
             num_episodes_tested += 1
             if (num_episodes_tested % (NUM_EPISODES_TO_TEST / 10) == 0):
-                print('{:4d} / {:5d}  =  {:5.1f}%'.format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
-        print("Time: {:3.1f} min".format((time.time() - start_time)/60.))
-        print("Success rate = {} / {} episodes = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
+                self.output('{:4d} / {:5d}  =  {:5.1f}%'.format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
+        self.output("Time: {:3.1f} min".format((time.time() - start_time)/60.))
+        self.output("Success rate = {} / {} episodes = {:5.1f}%".format(num_wins, num_episodes_tested, 100.0 * num_wins / num_episodes_tested))
 
     def test_on_episode(self, episode_id):
         steps_taken = 0
