@@ -1,13 +1,13 @@
-# Executing runspecs
+# Runspecs
 
-Each runspec defines all the settings for a single run.
+Each runspec file defines all the settings for a single run.
 To execute a runspec, with **wmg_agent** as the current directory, type:
 
     python run.py specs/<runspec>
 
-In this study, each runspec's hyperparameters were tuned for that particular combination of agent and environment.
+For each runspec below, hyperparameters were tuned for the particular combination of agent and environment.
 
-# Pathfinding runspecs
+# Pathfinding
 
 ![](../images/pathfinding.png)
 
@@ -41,7 +41,7 @@ loads **models/gru_pathfinding.pth** (one of the 100 GRU agent models trained on
 then tests the agent on 1000 random episodes.
 The reward per step should be around 0.474, which is 94.7% of possible reward.
 
-# BabyAI runspecs
+# BabyAI
 
 ![](../images/babyai.png)
 
@@ -92,7 +92,7 @@ loads **models/gru_flat_babyai.pth**
 then tests the agent on 1,000 heldout episodes.
 The success rate should be about 99%.
 
-# Sokoban runspecs
+# Sokoban
 
 ![](../images/sokoban.png)
 
