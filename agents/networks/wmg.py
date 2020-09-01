@@ -86,6 +86,8 @@ class WMG_Network(nn.Module):
         else:
             x_tens = torch.tensor(np.float32(x))
             embedded_vec_list.append(self.core_embedding_layer(x_tens))
+            print('shape is')
+            print(embedded_vec_list.shape)
 
         # Embed the state vectors.
         for i in range(old_matrix.num_vectors):
@@ -98,6 +100,8 @@ class WMG_Network(nn.Module):
         # Apply the Transformer.
         tfm_input = torch.cat(embedded_vec_list).view(1, len(embedded_vec_list), self.tfm_vec_size)
         tfm_output = self.tfm(tfm_input)[:,0,:]  # Take only the Core column's output vector.
+        print("output size")
+        print(tfm_output.size())
 
         # Update the state.
         if S:

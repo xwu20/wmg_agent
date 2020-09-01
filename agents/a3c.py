@@ -33,6 +33,9 @@ class A3cAgent(object):
         elif AGENT_NET == "WMG_Network":
             from agents.networks.wmg import WMG_Network
             self.network =  WMG_Network(observation_space_size, action_space_size)
+        elif AGENT_NET == "DNC_Network":
+            from agents.networks.dnc import DNC_Network
+            self.network =  DNC_Network(observation_space_size, action_space_size)
         else:
             assert False  # The specified agent network was not found.
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=LEARNING_RATE,
@@ -97,17 +100,23 @@ class A3cAgent(object):
         # Train.
         self.train(next_value.squeeze().data.numpy())
         # Stop the gradients from flowing back into this window that we just trained on.
+        print("we should detach")
+        print("we should detach")
+        print("we should detach")
+        print("we should detach")
+        print("we should detach")
         self.net_state = self.network.detach_from_history(self.net_state)
         # Clear the experiment buffer.
         self.reset_adaptation_state()
 
     def train(self, next_value):
-        ''' Update the weights. '''
-        loss = self.loss_function(next_value, torch.cat(self.values), torch.cat(self.logps), torch.cat(self.actions), np.asarray(self.rewards))
-        self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.network.parameters(), GRADIENT_CLIP)
-        self.optimizer.step()
+        with torch.autograd.set_detect_anomaly(True):
+            ''' Update the weights. '''
+            loss = self.loss_function(next_value, torch.cat(self.values), torch.cat(self.logps), torch.cat(self.actions), np.asarray(self.rewards))
+            self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.network.parameters(), GRADIENT_CLIP)
+            self.optimizer.step()
 
     def anneal_lr(self):
         print('Scaling down the learning rate by {}'.format(LR_GAMMA))
