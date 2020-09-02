@@ -43,29 +43,13 @@ class DNC_Network(nn.Module):
 
 
 		self.controller = nn.LSTM(observation_space, hidden_size)
-		#commented for now
 		self.access = MemoryModule()
-
-		# self.access_output_size = num_reads * word_size
-
-		# self.output_size = output_size
-
-		# self.clip_value = clip_value or 0
-
-		# self.state_size = DNCState(access_output=self.access_output_size, 
-		# 	access_state=self.access.state_size(),
-		# 	controller_state=self.controller.state_size)
-		#end commented for now
-
 		
 
 		self.actor_critic_layers = SeparateActorCriticLayers(new_size, 2, AC_HIDDEN_LAYER_SIZE, action_space_size)
 
 	def forward(self, obs, prev_state):
 		print("forward again")
-		#print("tens is")
-		#tens = torch.FloatTensor(obs).unsqueeze(0)
-		#print(tens)
 		prev_controller_state = prev_state.controller_state
 		prev_access_state = prev_state.access_state
 
@@ -80,19 +64,6 @@ class DNC_Network(nn.Module):
 		memory_output = access_output[0].view(1, new_size)
 
 		policy, value_est  = self.actor_critic_layers(memory_output)
-
-		# initial_memory = np.random.rand(batch_size, memory_size, word_size)
-		# initial_read_weights = np.random.rand(batch_size, num_read_heads, memory_size)
-		# initial_write_weights = np.random.rand(batch_size, num_write_heads, memory_size)
-		# initial_linkage = np.random.rand(batch_size, num_write_heads, memory_size, memory_size)
-
-		# initial_linkage_link = np.random.rand(batch_size, num_write_heads, memory_size, memory_size)
-		# initial_linkage_precendence_weights = np.random.rand(batch_size, num_write_heads, memory_size)
-
-		# initialLinkage = TemporalLinkageState(initial_linkage_link, initial_linkage_precendence_weights)
-		# initial_usage = np.random.rand(batch_size, memory_size)
-		# initial_access_state = AccessState(initial_memory, initial_read_weights, 
-		# 	initial_write_weights, initialLinkage, initial_usage)
 
 
 		new_prev_state = DNCState(access_output[0], access_output[1], (hn, cn))
@@ -132,12 +103,15 @@ class DNC_Network(nn.Module):
 		initial_state = DNCState(None, initial_access_state, (torch.zeros(1,1,hidden_size), torch.zeros(1,1,hidden_size)))
 		return initial_state
 	def detach_from_history(self, state):
-		state.access_state.memory.detach()
+
+		new_access_output = state.access_output.detach()
+		new_linkage = TemporalLinkageState(state.access_state.linkage.link.detach(), state.access_state.linkage.precedence_weights.detach())
+		new_access_state = AccessState(state.access_state.memory.detach(), state.access_state.read_weights.detach(), state.access_state.write_weights.detach(), new_linkage, state.access_state.usage.detach())
 
 		net_state = []
 		for k in state.controller_state:
 			net_state.append(k.detach())
-		new_detach_state = DNCState(None, state.access_state, (net_state[0], net_state[1]))
+		new_detach_state = DNCState(new_access_output, new_access_state, (net_state[0], net_state[1]))
 		return new_detach_state
 
 

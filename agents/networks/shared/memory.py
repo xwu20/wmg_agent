@@ -44,36 +44,22 @@ class MemoryModule(nn.Module):
 
 	def forward(self, x, prev_state):
 
+
 		read_output = self.read_inputs(x)
-		print("read output is")
-		print(read_output)
 
 
 		usage = self.computeUsage(read_output, prev_state)
-		print("usage is")
-		print(usage)
 
 		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
-		print("write weight is")
-		print(write_weights)
-		memory = self.erase_and_write(prev_state.memory, write_weights,
+
+		memory = self.erase_and_write(prev_state.memory, write_weights.detach(),
 		 	read_output['erase_vector'], read_output['write_vector'])
 
-		print("memory is")
-		print(memory)
-
 		linkage_state = self.linkage(write_weights, prev_state.linkage)
-		print("linkage state is")
-		print(linkage_state)
 
 		read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
 
-		print('read weight is')
-		print(read_weights)
-
-		read_words = torch.matmul(read_weights, memory)
-		print("read words is")
-		print(read_words)
+		read_words = torch.matmul(read_weights.detach(), memory)
 
 		return (read_words, AccessState(memory=memory, read_weights=read_weights,
 			write_weights=write_weights, linkage=linkage_state, usage=usage))
@@ -129,9 +115,9 @@ class MemoryModule(nn.Module):
 		write_weights = 1-torch.prod(new_write_weights, 1)
 		usage = prev_usage + (1-prev_usage)*write_weights
 
-		free_gate = torch.unsqueeze(free_gate, -1)
+		free_gate_new = torch.unsqueeze(free_gate, -1)
 
-		free_read_weights = free_gate * read_weights
+		free_read_weights = free_gate_new * read_weights
 
 		phi = 1-torch.prod(free_read_weights, 1)
 
@@ -142,89 +128,52 @@ class MemoryModule(nn.Module):
 		memory_detached = memory
 
 		dot = torch.matmul(read_inputs['write_keys'], torch.transpose(memory_detached, 1, 2))
-		print("the k keys")
-		print(read_inputs['write_keys'])
-		print('memory is')
-		print(memory_detached)
 
 		memory_norms = torch.sqrt(torch.sum(memory_detached*memory_detached, 2, keepdim=True))
 
 		keys = read_inputs['write_keys']
-		keys = torch.unsqueeze(keys, 0)
+		keys_unsqueezed = torch.unsqueeze(keys, 0)
 
-		intermed_keys = torch.sum(keys*keys, 2, keepdim=True)
+		intermed_keys = torch.sum(keys_unsqueezed*keys_unsqueezed, 2, keepdim=True)
 
 		key_norms = torch.sqrt(intermed_keys)
 
 		norm = torch.matmul(key_norms, torch.transpose(memory_norms, 1, 2))
 		similarity = dot / (norm + _EPSILON)
-		print("simiiliarity is")
-		print(similarity)
 		write_content_weights = torch.zeros(batch_size,num_write_heads, word_size)
 
 
-		write_gates=(read_inputs['allocation_gate'] * read_inputs['write_gate'])
-		write_gates = torch.unsqueeze(write_gates, -1)
+		write_gates_raw=(read_inputs['allocation_gate'] * read_inputs['write_gate'])
+		write_gates = torch.unsqueeze(write_gates_raw, -1)
 		allocation_weights = []
-		print("write gates is")
-		print(write_gates)
 
 		return_write_weights = torch.zeros(batch_size, num_write_heads, word_size)
 
 
 		for i in range(num_write_heads):
-			###TODO check that sometimes beta is negative, that is not right, beta > 1
-			#WARNING also this does not generalize to larger batches
 			beta = 1 + torch.log(1 + torch.exp(read_inputs['write_strengths'][0][i]))
-			# print("beta is")
-			# print(beta)
-			similarity_row = similarity[0][i][:]
-			# print(similarity_row)
-			similarity_row = similarity_row * beta
-			# print("similarity row is")
-			# print(similarity_row)
-			write_content_weights[0][i] = torch.nn.functional.softmax(similarity_row)
 
-			# print("usage allocation is")
-			# print(self._allocation(usage))
+			similarity_row = similarity[0][i][:]
+			similarity_row = similarity_row * beta
+			write_content_weights[0][i] = torch.nn.functional.softmax(similarity_row)
 
 			allocation_weights.append(self._allocation(usage))
 			usage += ((1 - usage) * write_gates[:, i, :] * allocation_weights[i])
-			# print("usage is")
-			# print(usage)
-			# print("the allocation weight is")
-			# print(allocation_weights[i])
 
 			return_write_weights[0][i] = read_inputs['write_gate'][0][i] *(read_inputs['allocation_gate'][0][i]*allocation_weights[i] + (1-read_inputs['allocation_gate'][0][i])*write_content_weights[0][i])
 
-		# print("write_content_weights")
-		# print(write_content_weights)
-
-		# write_allocation_weights = torch.stack(allocation_weights, axis=1)
-
-
-		# allocation_gate = torch.unsqueeze(read_inputs['allocation_gate'], -1)
-		# write_gate = torch.unsqueeze(read_inputs['write_gate'], -1)
-
-		#return write_gate * (allocation_gate * write_allocation_weights +
-		# 				   (1 - allocation_gate) * write_content_weights)
-
 		return return_write_weights
 
-	def _allocation(self, usage):
+	def _allocation(self, usage_in):
 
-		usage = _EPSILON + (1 - _EPSILON) * usage
+		usage = _EPSILON + (1 - _EPSILON) * usage_in
 
 
 		sorted_usage, indices = torch.topk(usage, memory_size, largest=False, sorted=True)
 
-		#this is not quite right, check
-
 		prod_sorted_usage = torch.cumprod(sorted_usage, axis=1)
 		exclusive_prod_sorted_usage = torch.ones(1,memory_size)
 		exclusive_prod_sorted_usage[0][1:] = prod_sorted_usage[0][:-1]
-
-		##end
 
 		sorted_allocation = (1-sorted_usage)*exclusive_prod_sorted_usage
 
@@ -246,7 +195,6 @@ class MemoryModule(nn.Module):
 
 		weighted_resets = expand_address*reset_weights_expanded
 
-		#reset_gate = util.reduce_prod(1 - weighted_resets, 1)
 		reset_gate = torch.prod(1-weighted_resets, 1)
 
 		memory_detached *= reset_gate
@@ -255,11 +203,6 @@ class MemoryModule(nn.Module):
 		add_matrix = torch.matmul(torch.transpose(address, 1,2), values)
 
 		memory_detached += add_matrix
-
-		print("new memory should be")
-		print("NEW MEMROY SHOULD BE")
-		print("NEW MEMORY SHOULD BE")
-		print(memory_detached)
 
 		return memory_detached
 
@@ -278,8 +221,8 @@ class MemoryModule(nn.Module):
 		for i in range(num_write_heads):
 			link[0][i].fill_diagonal_(0)
 
-		write_sum = torch.sum(write_weights, 2)
-		write_sum = torch.unsqueeze(write_sum, 2)
+		write_sum_raw = torch.sum(write_weights, 2)
+		write_sum = torch.unsqueeze(write_sum_raw, 2)
 
 		precedence_weights = (1 - write_sum) * prev_precedence_weights_tensor + write_weights
 
@@ -291,8 +234,8 @@ class MemoryModule(nn.Module):
 
 		memory_norms = torch.sqrt(torch.sum(memory*memory, axis=2, keepdim=True))
 
-		keys = inputs['read_keys']
-		keys = torch.unsqueeze(keys, 0)
+		keys_in = inputs['read_keys']
+		keys = torch.unsqueeze(keys_in, 0)
 
 		key_norms = torch.sqrt(torch.sum(keys*keys, axis=2, keepdim=True))
 
@@ -302,15 +245,11 @@ class MemoryModule(nn.Module):
 		beta_read_strengths = inputs['read_strengths']
 
 		content_weights = torch.zeros(batch_size,num_read_heads, word_size)
-		##not entirely right, check
 
 		for i in range(num_read_heads):
 			content_weights[0][i] = torch.nn.functional.softmax(similarity[0][i]*beta_read_strengths[0][i])
 
-		####
 		link = linkage_state.link
-		print("lnk is")
-		print(link)
 
 
 		expanded_read_weights = torch.stack((prev_state.read_weights, prev_state.read_weights), dim=1)

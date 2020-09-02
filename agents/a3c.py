@@ -100,11 +100,6 @@ class A3cAgent(object):
         # Train.
         self.train(next_value.squeeze().data.numpy())
         # Stop the gradients from flowing back into this window that we just trained on.
-        print("we should detach")
-        print("we should detach")
-        print("we should detach")
-        print("we should detach")
-        print("we should detach")
         self.net_state = self.network.detach_from_history(self.net_state)
         # Clear the experiment buffer.
         self.reset_adaptation_state()
