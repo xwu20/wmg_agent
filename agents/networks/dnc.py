@@ -65,19 +65,19 @@ class DNC_Network(nn.Module):
 
 		policy, value_est  = self.actor_critic_layers(memory_output)
 
-		access_output_0_clone = access_output[0].clone()
-		access_output_1_memory_clone = access_output[1].memory.clone()
-		access_output_1_read_weights_clone = access_output[1].read_weights.clone()
-		access_output_1_write_weights_clone = access_output[1].write_weights.clone()
-		access_output_1_linkage_link_clone = access_output[1].linkage.link.clone()
-		access_output_1_linkage_precendence_weights_clone = access_output[1].linkage.precedence_weights.clone()
-		access_output_1_usage_clone = access_output[1].usage.clone()
+		access_output_0_clone = access_output[0].detach().clone()
+		access_output_1_memory_clone = access_output[1].memory.detach().clone()
+		access_output_1_read_weights_clone = access_output[1].read_weights.detach().clone()
+		access_output_1_write_weights_clone = access_output[1].write_weights.detach().clone()
+		access_output_1_linkage_link_clone = access_output[1].linkage.link.detach().clone()
+		access_output_1_linkage_precendence_weights_clone = access_output[1].linkage.precedence_weights.detach().clone()
+		access_output_1_usage_clone = access_output[1].usage.detach().clone()
 
 		linkage_clone = TemporalLinkageState(access_output_1_linkage_link_clone, access_output_1_linkage_precendence_weights_clone)
 
 		access_state_clone = AccessState(access_output_1_memory_clone, access_output_1_read_weights_clone, access_output_1_write_weights_clone, linkage_clone, access_output_1_usage_clone)
 
-		(hn_clone, cn_clone) = (hn.clone(), cn.clone())
+		(hn_clone, cn_clone) = (hn.detach().clone(), cn.detach().clone())
 
 		#new_prev_state = DNCState(access_output[0], access_output[1], (hn, cn))
 		new_prev_state = DNCState(access_output_0_clone, access_state_clone, (hn_clone, cn_clone))

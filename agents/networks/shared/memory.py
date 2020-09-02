@@ -26,6 +26,26 @@ AccessState = collections.namedtuple('AccessState', (
 
 _EPSILON = 0.001
 
+def erase_and_write(memory, address, reset_weights, values):
+
+	memory_detached = memory
+
+	expand_address = torch.unsqueeze(address, 3)
+	reset_weights_expanded = torch.unsqueeze(reset_weights, 2)
+
+	weighted_resets = expand_address*reset_weights_expanded
+
+	reset_gate = torch.prod(1-weighted_resets, 1)
+
+	memory_detached *= reset_gate
+
+
+	add_matrix = torch.matmul(torch.transpose(address, 1,2), values)
+
+	memory_detached += add_matrix
+
+	return memory_detached
+
 class MemoryModule(nn.Module):
 
 	def __init__(self):
@@ -48,16 +68,20 @@ class MemoryModule(nn.Module):
 
 		usage = self.computeUsage(read_output, prev_state)
 
-		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
+		# usage = torch.empty(batch_size, memory_size)
+		# torch.nn.init.uniform_(usage, a=0.0, b=1.0)
 
-		memory = self.erase_and_write(prev_state.memory, write_weights.detach(),
-		 	read_output['erase_vector'], read_output['write_vector'])
+		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
 
 		linkage_state = self.linkage(write_weights, prev_state.linkage)
 
+		memory = erase_and_write(prev_state.memory, write_weights,
+		 	read_output['erase_vector'], read_output['write_vector'])
+
+
 		read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
 
-		read_words = torch.matmul(read_weights.detach(), memory)
+		read_words = torch.matmul(read_weights, memory)
 
 		# read_words_clone = read_words.clone()
 		# memory_clone = memory.clone()
@@ -114,7 +138,7 @@ class MemoryModule(nn.Module):
 
 	def computeUsage(self, inputs, prev_state):
 
-		new_write_weights = prev_state.write_weights
+		new_write_weights = prev_state.write_weights.detach()
 		free_gate = inputs['free_gate']
 		read_weights = prev_state.read_weights
 		prev_usage = prev_state.usage
@@ -170,7 +194,7 @@ class MemoryModule(nn.Module):
 
 			return_write_weights[0][i] = read_inputs['write_gate'][0][i] *(read_inputs['allocation_gate'][0][i]*allocation_weights[i] + (1-read_inputs['allocation_gate'][0][i])*write_content_weights[0][i])
 
-		return return_write_weights
+		return return_write_weights.detach()
 
 	def _allocation(self, usage_in):
 
@@ -194,25 +218,7 @@ class MemoryModule(nn.Module):
 		return final_allocation
 
 
-	def erase_and_write(self, memory, address, reset_weights, values):
 
-		memory_detached = memory
-
-		expand_address = torch.unsqueeze(address, 3)
-		reset_weights_expanded = torch.unsqueeze(reset_weights, 2)
-
-		weighted_resets = expand_address*reset_weights_expanded
-
-		reset_gate = torch.prod(1-weighted_resets, 1)
-
-		memory_detached *= reset_gate
-
-
-		add_matrix = torch.matmul(torch.transpose(address, 1,2), values)
-
-		memory_detached += add_matrix
-
-		return memory_detached
 
 	def linkage(self, write_weights, prev_linkage):
 
@@ -279,7 +285,7 @@ class MemoryModule(nn.Module):
 			  torch.unsqueeze(forward_mode, 3) * forward_weights, 2) +
 		  torch.sum(torch.unsqueeze(backward_mode, 3) * backward_weights, 2))
 
-		return read_weights
+		return read_weights.detach()
 
 	def state_size(self):
 		"""Returns a tuple of the shape of the state tensors."""
