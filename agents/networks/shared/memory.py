@@ -44,25 +44,33 @@ class MemoryModule(nn.Module):
 
 	def forward(self, x, prev_state):
 
-
 		read_output = self.read_inputs(x)
-
 
 		usage = self.computeUsage(read_output, prev_state)
 
 		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
 
-		memory = self.erase_and_write(prev_state.memory, write_weights.detach(),
+		memory = self.erase_and_write(prev_state.memory, write_weights,
 		 	read_output['erase_vector'], read_output['write_vector'])
 
 		linkage_state = self.linkage(write_weights, prev_state.linkage)
 
 		read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
 
-		read_words = torch.matmul(read_weights.detach(), memory)
+		read_words = torch.matmul(read_weights, memory)
 
-		return (read_words, AccessState(memory=memory, read_weights=read_weights,
-			write_weights=write_weights, linkage=linkage_state, usage=usage))
+		read_words_clone = read_words.clone()
+		memory_clone = memory.clone()
+		read_weights_clone = read_weights.clone()
+		write_weights_clone = write_weights.clone()
+		linkage_link_clone = linkage_state.link.clone()
+		linkage_precendence_weights_clone = linkage_state.precedence_weights.clone()
+		usage_clone = usage.clone()
+
+		cloned_linkage = TemporalLinkageState(linkage_link_clone, linkage_precendence_weights_clone)
+
+		return (read_words_clone, AccessState(memory=memory_clone, read_weights=read_weights_clone,
+			write_weights=write_weights_clone, linkage=cloned_linkage, usage=usage_clone))
 
 
 
