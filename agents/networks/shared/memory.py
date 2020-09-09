@@ -26,25 +26,59 @@ AccessState = collections.namedtuple('AccessState', (
 
 _EPSILON = 0.001
 
+def CosineSimilarity(a, b, dimA=2, dimB=2, normBy=2):
+  """Batchwise Cosine distance
+  Cosine distance
+  Arguments:
+      a {Tensor} -- A 3D Tensor (b * m * w)
+      b {Tensor} -- A 3D Tensor (b * r * w)
+  Keyword Arguments:
+      dimA {number} -- exponent value of the norm for `a` (default: {2})
+      dimB {number} -- exponent value of the norm for `b` (default: {1})
+  Returns:
+      Tensor -- Batchwise cosine distance (b * r * m)
+  """
+  a_norm = torch.norm(a, normBy, dimA, keepdim=True).expand_as(a) + _EPSILON
+  b_norm = torch.norm(b, normBy, dimB, keepdim=True).expand_as(b) + _EPSILON
+
+  x = torch.bmm(a, b.transpose(1, 2)).transpose(1, 2) / (
+      torch.bmm(a_norm, b_norm.transpose(1, 2)).transpose(1, 2) + _EPSILON)
+  # apply_dict(locals())
+  return x
+
+
+def Softmax_axis(input, axis=1):
+  """Softmax on an axis
+  Softmax on an axis
+  Arguments:
+      input {Tensor} -- input Tensor
+  Keyword Arguments:
+      axis {number} -- axis on which to take softmax on (default: {1})
+  Returns:
+      Tensor -- Softmax output Tensor
+  """
+  input_size = input.size()
+
+  trans_input = input.transpose(axis, len(input_size) - 1)
+  trans_size = trans_input.size()
+
+  input_2d = trans_input.contiguous().view(-1, trans_size[-1])
+  soft_max_2d = torch.nn.functional.softmax(input_2d, -1)
+  soft_max_nd = soft_max_2d.view(*trans_size)
+  return soft_max_nd.transpose(axis, len(input_size) - 1)
+
 def erase_and_write(memory, address, reset_weights, values):
 
-	memory_detached = memory
 
-	expand_address = torch.unsqueeze(address, 3)
-	reset_weights_expanded = torch.unsqueeze(reset_weights, 2)
-
-	weighted_resets = expand_address*reset_weights_expanded
+	weighted_resets = torch.unsqueeze(address, 3)*torch.unsqueeze(reset_weights, 2)
 
 	reset_gate = torch.prod(1-weighted_resets, 1)
 
-	memory_detached *= reset_gate
+	memory = memory * reset_gate
 
+	memory = memory + torch.matmul(torch.transpose(address, 1,2), values)
 
-	add_matrix = torch.matmul(torch.transpose(address, 1,2), values)
-
-	memory_detached += add_matrix
-
-	return memory_detached
+	return memory
 
 class MemoryModule(nn.Module):
 
@@ -72,16 +106,17 @@ class MemoryModule(nn.Module):
 		# torch.nn.init.uniform_(usage, a=0.0, b=1.0)
 
 		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
-
-		linkage_state = self.linkage(write_weights, prev_state.linkage)
+		
 
 		memory = erase_and_write(prev_state.memory, write_weights,
 		 	read_output['erase_vector'], read_output['write_vector'])
 
+		linkage_state = self.linkage(write_weights, prev_state.linkage)
 
-		read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
 
-		read_words = torch.matmul(read_weights, memory)
+		read_words, read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
+
+		#read_words = torch.matmul(read_weights, memory)
 
 		# read_words_clone = read_words.clone()
 		# memory_clone = memory.clone()
@@ -138,63 +173,61 @@ class MemoryModule(nn.Module):
 
 	def computeUsage(self, inputs, prev_state):
 
-		new_write_weights = prev_state.write_weights.detach()
-		free_gate = inputs['free_gate']
-		read_weights = prev_state.read_weights
-		prev_usage = prev_state.usage
 
+		#write_weights = 1-torch.prod(new_write_weights, 1)
+		usage = prev_state.usage + (1-prev_state.usage)*(1-torch.prod(prev_state.write_weights.detach(), 1))
 
-		write_weights = 1-torch.prod(new_write_weights, 1)
-		usage = prev_usage + (1-prev_usage)*write_weights
-
-		free_gate_new = torch.unsqueeze(free_gate, -1)
-
-		free_read_weights = free_gate_new * read_weights
-
-		phi = 1-torch.prod(free_read_weights, 1)
+		#should there be 1- in this phi expression
+		phi = torch.prod(torch.unsqueeze(inputs['free_gate'], -1) * prev_state.read_weights, 1)
 
 		return usage*phi
 
 
 	def computeWrite_weights(self, read_inputs, memory, usage):
-		memory_detached = memory
+		d = CosineSimilarity(memory, torch.unsqueeze(read_inputs['write_keys'], 0))
+		write_content_weights = Softmax_axis(d * read_inputs['write_strengths'].unsqueeze(2), 2)
 
-		dot = torch.matmul(read_inputs['write_keys'], torch.transpose(memory_detached, 1, 2))
+		# memory_detached = memory
 
-		memory_norms = torch.sqrt(torch.sum(memory_detached*memory_detached, 2, keepdim=True))
+		# dot = torch.matmul(read_inputs['write_keys'], torch.transpose(memory_detached, 1, 2))
 
-		keys = read_inputs['write_keys']
-		keys_unsqueezed = torch.unsqueeze(keys, 0)
+		# memory_norms = torch.sqrt(torch.sum(memory_detached*memory_detached, 2, keepdim=True))
 
-		intermed_keys = torch.sum(keys_unsqueezed*keys_unsqueezed, 2, keepdim=True)
+		# keys = read_inputs['write_keys']
+		# keys_unsqueezed = torch.unsqueeze(keys, 0)
 
-		key_norms = torch.sqrt(intermed_keys)
+		# intermed_keys = torch.sum(keys_unsqueezed*keys_unsqueezed, 2, keepdim=True)
 
-		norm = torch.matmul(key_norms, torch.transpose(memory_norms, 1, 2))
-		similarity = dot / (norm + _EPSILON)
-		write_content_weights = torch.zeros(batch_size,num_write_heads, word_size)
+		# key_norms = torch.sqrt(intermed_keys)
 
-
-		write_gates_raw=(read_inputs['allocation_gate'] * read_inputs['write_gate'])
-		write_gates = torch.unsqueeze(write_gates_raw, -1)
-		allocation_weights = []
-
-		return_write_weights = torch.zeros(batch_size, num_write_heads, word_size)
+		# norm = torch.matmul(key_norms, torch.transpose(memory_norms, 1, 2))
+		# similarity = dot / (norm + _EPSILON)
+		# print("similarity is:")
+		# print(similarity)
+		# write_content_weights = torch.zeros(batch_size,num_write_heads, word_size)
 
 
-		for i in range(num_write_heads):
-			beta = 1 + torch.log(1 + torch.exp(read_inputs['write_strengths'][0][i]))
+		# write_gates_raw=(read_inputs['allocation_gate'] * read_inputs['write_gate'])
+		# write_gates = torch.unsqueeze(write_gates_raw, -1)
+		# allocation_weights = []
 
-			similarity_row = similarity[0][i][:]
-			similarity_row = similarity_row * beta
-			write_content_weights[0][i] = torch.nn.functional.softmax(similarity_row)
+		# return_write_weights = torch.ones(batch_size, num_write_heads, word_size) * 0.1
 
-			allocation_weights.append(self._allocation(usage))
-			usage += ((1 - usage) * write_gates[:, i, :] * allocation_weights[i])
 
-			return_write_weights[0][i] = read_inputs['write_gate'][0][i] *(read_inputs['allocation_gate'][0][i]*allocation_weights[i] + (1-read_inputs['allocation_gate'][0][i])*write_content_weights[0][i])
+		# for i in range(num_write_heads):
+		# 	beta = 1 + torch.log(1 + torch.exp(read_inputs['write_strengths'][0][i]))
 
-		return return_write_weights.detach()
+		# 	similarity_row = similarity[0][i][:]
+		# 	similarity_row = similarity_row * beta
+		# 	write_content_weights[0][i] = torch.nn.functional.softmax(similarity_row)
+
+		# 	allocation_weights.append(self._allocation(usage))
+		# 	usage += ((1 - usage) * write_gates[:, i, :] * allocation_weights[i])
+
+		# 	return_write_weights[0][i] = read_inputs['write_gate'][0][i] *(read_inputs['allocation_gate'][0][i]*allocation_weights[i] + (1-read_inputs['allocation_gate'][0][i])*write_content_weights[0][i])
+
+		# #return_write_weights.requires_grad = False
+		return write_content_weights
 
 	def _allocation(self, usage_in):
 
@@ -285,7 +318,10 @@ class MemoryModule(nn.Module):
 			  torch.unsqueeze(forward_mode, 3) * forward_weights, 2) +
 		  torch.sum(torch.unsqueeze(backward_mode, 3) * backward_weights, 2))
 
-		return read_weights.detach()
+		read_words = torch.matmul(read_weights, memory)
+
+		#read_weights.requires_grad = False
+		return read_words, read_weights
 
 	def state_size(self):
 		"""Returns a tuple of the shape of the state tensors."""
