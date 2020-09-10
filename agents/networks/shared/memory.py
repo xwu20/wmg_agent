@@ -5,6 +5,8 @@ import math
 import collections
 import numpy as np
 import copy
+from torch.autograd import Variable as var
+
 
 
 from utils.spec_reader import spec
@@ -26,56 +28,60 @@ AccessState = collections.namedtuple('AccessState', (
 
 _EPSILON = 0.001
 
-def CosineSimilarity(a, b, dimA=2, dimB=2, normBy=2):
-  """Batchwise Cosine distance
-  Cosine distance
-  Arguments:
-      a {Tensor} -- A 3D Tensor (b * m * w)
-      b {Tensor} -- A 3D Tensor (b * r * w)
-  Keyword Arguments:
-      dimA {number} -- exponent value of the norm for `a` (default: {2})
-      dimB {number} -- exponent value of the norm for `b` (default: {1})
-  Returns:
-      Tensor -- Batchwise cosine distance (b * r * m)
-  """
-  a_norm = torch.norm(a, normBy, dimA, keepdim=True).expand_as(a) + _EPSILON
-  b_norm = torch.norm(b, normBy, dimB, keepdim=True).expand_as(b) + _EPSILON
 
-  x = torch.bmm(a, b.transpose(1, 2)).transpose(1, 2) / (
-      torch.bmm(a_norm, b_norm.transpose(1, 2)).transpose(1, 2) + _EPSILON)
-  # apply_dict(locals())
-  return x
+def CosineSimilarity(a, b, dimA=2, dimB=2, normBy=2):
+	"""Batchwise Cosine distance
+	Cosine distance
+	Arguments:
+		a {Tensor} -- A 3D Tensor (b * m * w)
+		b {Tensor} -- A 3D Tensor (b * r * w)
+	Keyword Arguments:
+		dimA {number} -- exponent value of the norm for `a` (default: {2})
+		dimB {number} -- exponent value of the norm for `b` (default: {1})
+	Returns:
+		Tensor -- Batchwise cosine distance (b * r * m)
+	"""
+	#a_norm = torch.norm(a, normBy, dimA, keepdim=True).expand_as(a) + _EPSILON
+	a_norm_unexpanded = torch.norm(a, normBy, dimA, keepdim=True) + _EPSILON
+
+	#b_norm = torch.norm(b, normBy, dimB, keepdim=True).expand_as(b) + _EPSILON
+	b_norm_unexpanded = torch.norm(b, normBy, dimB, keepdim=True) + _EPSILON
+	dot = torch.bmm(a, b.transpose(1, 2)).transpose(1, 2)
+
+	#prod_norm = torch.bmm(a_norm, b_norm.transpose(1, 2)).transpose(1, 2) + _EPSILON
+	prod_norm_unexpanded = torch.bmm(b_norm_unexpanded, a_norm_unexpanded.transpose(1, 2)) + _EPSILON
+	# print("product norm is")
+	# print(prod_norm)
+
+	x = dot / (prod_norm_unexpanded)
+	# apply_dict(locals())
+	return x
 
 
 def Softmax_axis(input, axis=1):
-  """Softmax on an axis
-  Softmax on an axis
-  Arguments:
-      input {Tensor} -- input Tensor
-  Keyword Arguments:
-      axis {number} -- axis on which to take softmax on (default: {1})
-  Returns:
-      Tensor -- Softmax output Tensor
-  """
-  input_size = input.size()
+	"""Softmax on an axis
+	Softmax on an axis
+	Arguments:
+		input {Tensor} -- input Tensor
+	Keyword Arguments:
+		axis {number} -- axis on which to take softmax on (default: {1})
+	Returns:
+		Tensor -- Softmax output Tensor
+	"""
+	input_size = input.size()
 
-  trans_input = input.transpose(axis, len(input_size) - 1)
-  trans_size = trans_input.size()
+	trans_input = input.transpose(axis, len(input_size) - 1)
+	trans_size = trans_input.size()
 
-  input_2d = trans_input.contiguous().view(-1, trans_size[-1])
-  soft_max_2d = torch.nn.functional.softmax(input_2d, -1)
-  soft_max_nd = soft_max_2d.view(*trans_size)
-  return soft_max_nd.transpose(axis, len(input_size) - 1)
+	input_2d = trans_input.contiguous().view(-1, trans_size[-1])
+	soft_max_2d = torch.nn.functional.softmax(input_2d, -1)
+	soft_max_nd = soft_max_2d.view(*trans_size)
+	return soft_max_nd.transpose(axis, len(input_size) - 1)
 
 def erase_and_write(memory, address, reset_weights, values):
-
-
 	weighted_resets = torch.unsqueeze(address, 3)*torch.unsqueeze(reset_weights, 2)
-
 	reset_gate = torch.prod(1-weighted_resets, 1)
-
 	memory = memory * reset_gate
-
 	memory = memory + torch.matmul(torch.transpose(address, 1,2), values)
 
 	return memory
@@ -102,31 +108,16 @@ class MemoryModule(nn.Module):
 
 		usage = self.computeUsage(read_output, prev_state)
 
-		# usage = torch.empty(batch_size, memory_size)
-		# torch.nn.init.uniform_(usage, a=0.0, b=1.0)
-
 		write_weights = self.computeWrite_weights(read_output, prev_state.memory, usage)
 		
 
 		memory = erase_and_write(prev_state.memory, write_weights,
-		 	read_output['erase_vector'], read_output['write_vector'])
+			read_output['erase_vector'], read_output['write_vector'])
 
 		linkage_state = self.linkage(write_weights, prev_state.linkage)
 
 
 		read_words, read_weights = self.computeReadWeights(read_output, memory, prev_state, linkage_state)
-
-		#read_words = torch.matmul(read_weights, memory)
-
-		# read_words_clone = read_words.clone()
-		# memory_clone = memory.clone()
-		# read_weights_clone = read_weights.clone()
-		# write_weights_clone = write_weights.clone()
-		# linkage_link_clone = linkage_state.link.clone()
-		# linkage_precendence_weights_clone = linkage_state.precedence_weights.clone()
-		# usage_clone = usage.clone()
-
-		# cloned_linkage = TemporalLinkageState(linkage_link_clone, linkage_precendence_weights_clone)
 
 		return (read_words, AccessState(memory=memory, read_weights=read_weights,
 			write_weights=write_weights, linkage=linkage_state, usage=usage))
@@ -183,75 +174,68 @@ class MemoryModule(nn.Module):
 		return usage*phi
 
 
+	def allocate(self, usage, write_gate):
+		# ensure values are not too small prior to cumprod.
+		usage = _EPSILON + (1 - _EPSILON) * usage
+		batch_size = usage.size(0)
+		# free list
+		sorted_usage, phi = torch.topk(usage, memory_size, dim=1, largest=False)
+
+		# cumprod with exclusive=True
+		# https://discuss.pytorch.org/t/cumprod-exclusive-true-equivalences/2614/8
+		v = var(sorted_usage.data.new(batch_size, 1).fill_(1))
+		cat_sorted_usage = torch.cat((v, sorted_usage), 1)
+		prod_sorted_usage = torch.cumprod(cat_sorted_usage, 1)[:, :-1]
+
+		sorted_allocation_weights = (1 - sorted_usage) * prod_sorted_usage.squeeze()
+
+		# construct the reverse sorting index https://stackoverflow.com/questions/2483696/undo-or-reverse-argsort-python
+		_, phi_rev = torch.topk(phi, k=memory_size, dim=1, largest=False)
+		allocation_weights = sorted_allocation_weights.gather(1, phi_rev.long())
+
+		return allocation_weights.unsqueeze(1)
+
+	def write_weighting(self, write_content_weights, allocation_weights, write_gate, allocation_gate):
+		ag = allocation_gate.unsqueeze(-1)
+		wg = write_gate.unsqueeze(-1)
+
+		return wg * (ag * allocation_weights + (1 - ag) * write_content_weights)
+
+
 	def computeWrite_weights(self, read_inputs, memory, usage):
 		d = CosineSimilarity(memory, torch.unsqueeze(read_inputs['write_keys'], 0))
 		write_content_weights = Softmax_axis(d * read_inputs['write_strengths'].unsqueeze(2), 2)
+		alloc_weights = self.allocate(usage, read_inputs['allocation_gate'] * read_inputs['write_gate'])
+		# print("alloc_weights")
+		# print(alloc_weights)
+		# print("usaage iis")
+		# print(usage)
 
-		# memory_detached = memory
+		write_weights = self.write_weighting(write_content_weights, alloc_weights, read_inputs['write_gate'], read_inputs['allocation_gate'])
+		# print("write weights is")
+		# print(write_weights)
+		return write_weights
 
-		# dot = torch.matmul(read_inputs['write_keys'], torch.transpose(memory_detached, 1, 2))
+	# def _allocation(self, usage_in):
 
-		# memory_norms = torch.sqrt(torch.sum(memory_detached*memory_detached, 2, keepdim=True))
-
-		# keys = read_inputs['write_keys']
-		# keys_unsqueezed = torch.unsqueeze(keys, 0)
-
-		# intermed_keys = torch.sum(keys_unsqueezed*keys_unsqueezed, 2, keepdim=True)
-
-		# key_norms = torch.sqrt(intermed_keys)
-
-		# norm = torch.matmul(key_norms, torch.transpose(memory_norms, 1, 2))
-		# similarity = dot / (norm + _EPSILON)
-		# print("similarity is:")
-		# print(similarity)
-		# write_content_weights = torch.zeros(batch_size,num_write_heads, word_size)
+	# 	usage = _EPSILON + (1 - _EPSILON) * usage_in
 
 
-		# write_gates_raw=(read_inputs['allocation_gate'] * read_inputs['write_gate'])
-		# write_gates = torch.unsqueeze(write_gates_raw, -1)
-		# allocation_weights = []
+	# 	sorted_usage, indices = torch.topk(usage, memory_size, largest=False, sorted=True)
 
-		# return_write_weights = torch.ones(batch_size, num_write_heads, word_size) * 0.1
+	# 	prod_sorted_usage = torch.cumprod(sorted_usage, axis=1)
+	# 	exclusive_prod_sorted_usage = torch.ones(1,memory_size)
+	# 	exclusive_prod_sorted_usage[0][1:] = prod_sorted_usage[0][:-1]
 
+	# 	sorted_allocation = (1-sorted_usage)*exclusive_prod_sorted_usage
 
-		# for i in range(num_write_heads):
-		# 	beta = 1 + torch.log(1 + torch.exp(read_inputs['write_strengths'][0][i]))
+	# 	final_allocation = torch.zeros((1, memory_size))
+	# 	#undo the initial permutation
+	# 	for i in range(memory_size):
+	# 		a_index = indices[0][i]
+	# 		final_allocation[0][a_index] = sorted_allocation[0][i]
 
-		# 	similarity_row = similarity[0][i][:]
-		# 	similarity_row = similarity_row * beta
-		# 	write_content_weights[0][i] = torch.nn.functional.softmax(similarity_row)
-
-		# 	allocation_weights.append(self._allocation(usage))
-		# 	usage += ((1 - usage) * write_gates[:, i, :] * allocation_weights[i])
-
-		# 	return_write_weights[0][i] = read_inputs['write_gate'][0][i] *(read_inputs['allocation_gate'][0][i]*allocation_weights[i] + (1-read_inputs['allocation_gate'][0][i])*write_content_weights[0][i])
-
-		# #return_write_weights.requires_grad = False
-		return write_content_weights
-
-	def _allocation(self, usage_in):
-
-		usage = _EPSILON + (1 - _EPSILON) * usage_in
-
-
-		sorted_usage, indices = torch.topk(usage, memory_size, largest=False, sorted=True)
-
-		prod_sorted_usage = torch.cumprod(sorted_usage, axis=1)
-		exclusive_prod_sorted_usage = torch.ones(1,memory_size)
-		exclusive_prod_sorted_usage[0][1:] = prod_sorted_usage[0][:-1]
-
-		sorted_allocation = (1-sorted_usage)*exclusive_prod_sorted_usage
-
-		final_allocation = torch.zeros((1, memory_size))
-		#undo the initial permutation
-		for i in range(memory_size):
-			a_index = indices[0][i]
-			final_allocation[0][a_index] = sorted_allocation[0][i]
-
-		return final_allocation
-
-
-
+	# 	return final_allocation
 
 	def linkage(self, write_weights, prev_linkage):
 
@@ -276,25 +260,9 @@ class MemoryModule(nn.Module):
 		return TemporalLinkageState(link=link, precedence_weights=precedence_weights)
 
 	def computeReadWeights(self, inputs, memory, prev_state, linkage_state):
+		d = CosineSimilarity(memory, torch.unsqueeze(inputs['read_keys'], 0))
 
-		dot = torch.matmul(inputs['read_keys'], torch.transpose(memory, 1, 2))
-
-		memory_norms = torch.sqrt(torch.sum(memory*memory, axis=2, keepdim=True))
-
-		keys_in = inputs['read_keys']
-		keys = torch.unsqueeze(keys_in, 0)
-
-		key_norms = torch.sqrt(torch.sum(keys*keys, axis=2, keepdim=True))
-
-		norm = torch.matmul(key_norms, torch.transpose(memory_norms, 1, 2))
-		similarity = dot / (norm)
-
-		beta_read_strengths = inputs['read_strengths']
-
-		content_weights = torch.zeros(batch_size,num_read_heads, word_size)
-
-		for i in range(num_read_heads):
-			content_weights[0][i] = torch.nn.functional.softmax(similarity[0][i]*beta_read_strengths[0][i])
+		content_weights = Softmax_axis(d * inputs['read_strengths'].unsqueeze(2), 2)
 
 		link = linkage_state.link
 
@@ -319,8 +287,6 @@ class MemoryModule(nn.Module):
 		  torch.sum(torch.unsqueeze(backward_mode, 3) * backward_weights, 2))
 
 		read_words = torch.matmul(read_weights, memory)
-
-		#read_weights.requires_grad = False
 		return read_words, read_weights
 
 	def state_size(self):

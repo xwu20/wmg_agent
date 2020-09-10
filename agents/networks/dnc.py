@@ -84,29 +84,17 @@ class DNC_Network(nn.Module):
 		return policy, value_est, new_prev_state
 
 	def init_state(self):
-		#to set up the initial access state
-		#initial_memory = torch.from_numpy(np.random.rand(batch_size, memory_size, word_size)).float()
 
 		initial_memory = torch.zeros(batch_size, memory_size, word_size)
-		torch.nn.init.uniform_(initial_memory, a=0.0, b=1.0)
 		initial_read_weights = torch.empty(batch_size, num_read_heads, memory_size)
 		torch.nn.init.uniform_(initial_read_weights, a=0.0, b=1/float(memory_size))
-		#initial_read_weights = torch.nn.init.constant_(initial_read_weights, 1/float(memory_size))
-		#initial_read_weights = torch.from_numpy(np.random.rand(batch_size, num_read_heads, memory_size)).float()
 		initial_write_weights = torch.empty(batch_size, num_write_heads, memory_size)
 		torch.nn.init.uniform_(initial_write_weights, a=0.0, b=1/float(memory_size))
-		#initial_write_weights = torch.nn.init.constant_(initial_write_weights, 1/float(memory_size))
-		#initial_write_weights = torch.from_numpy(np.random.rand(batch_size, num_write_heads, memory_size)).float()
-		#initial_linkage = np.random.rand(batch_size, num_write_heads, memory_size, memory_size)
 		initial_usage = torch.empty(batch_size, memory_size)
 		torch.nn.init.uniform_(initial_usage, a=0.0, b=1.0)
-
-		#initial_usage = torch.nn.init.constant_(initial_usage, 1/float(memory_size))
 		
 		initial_linkage_link = torch.zeros(batch_size, num_write_heads, memory_size, memory_size)
-		#initial_linkage_link = torch.from_numpy(np.random.rand(batch_size, num_write_heads, memory_size, memory_size)).float()
 		initial_linkage_precendence_weights = torch.zeros(batch_size, num_write_heads, memory_size)
-		#initial_linkage_precendence_weights = torch.from_numpy(np.random.rand(batch_size, num_write_heads, memory_size)).float()
 
 		initialLinkage = TemporalLinkageState(initial_linkage_link, initial_linkage_precendence_weights)
 
@@ -127,37 +115,5 @@ class DNC_Network(nn.Module):
 			net_state.append(k.detach())
 		new_detach_state = DNCState(new_access_output, new_access_state, (net_state[0], net_state[1]))
 		return new_detach_state
-
-
-	# def forward(self, x, prev_state):
-	# 	prev_access_output = prev_state.access_output
-	# 	prev_access_state = prev_state.access_state
-	# 	prev_controller_state = prev_state.controller_state
-
-
-	# 	batch_flatten = snt.BatchFlatten()
-	# 	controller_input = tf.concat([batch_flatten(inputs), batch_flatten(prev_access_output)], 1)
-
-	# 	controller_output, controller_state = self.controller(controller_input, prev_controller_state)
-	# 	access_output, access_state = self._access(controller_output,
- #                                               prev_access_state)
-	# 	output = tf.concat([controller_output, batch_flatten(access_output)], 1)
-
-	# 	output = nn.Linear(output_size=self._output_size.as_list()[0])
-
-	# 	policy, value_est  = self.actor_critic_layers(output)
-
-	# 	return policy, value_est, DNCState(
-	# 		access_output=access_output,
-	# 		access_state=access_state,
-	# 		controller_state=controller_state)
-
-
-
-    #controller_output = self._clip_if_enabled(controller_output)
-    #controller_state = tf.contrib.framework.nest.map_structure(self._clip_if_enabled, controller_state)
-
-    
-    #output = self._clip_if_enabled(output)
 
     
